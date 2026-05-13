@@ -6,6 +6,9 @@
 crash.log
 crash.*.log
 
+# Local source snapshots used for analysis
+.provider-src/
+
 # Terraform variable files may contain credentials
 *.tfvars
 *.tfvars.json
@@ -14,6 +17,7 @@ crash.*.log
 *.tfplan
 tfplan
 tfplan.json
+harness/out/
 
 # Local override files
 override.tf
