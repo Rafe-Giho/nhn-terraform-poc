@@ -1,0 +1,57 @@
+# Copy this file to terraform.tfvars and fill real values.
+# Do not commit terraform.tfvars.
+
+nhncloud_user_name = "user@example.com"
+nhncloud_tenant_id = "00000000000000000000000000000000"
+nhncloud_password  = "set-by-local-env-or-secret-manager"
+nhncloud_auth_url  = "https://api-identity-infrastructure.nhncloudservice.com/v2.0"
+nhncloud_region    = "KR1"
+
+project_prefix = "sgh"
+environment    = "dev"
+
+vpc_cidr = "10.10.0.0/16"
+
+subnets = {
+  app-a = {
+    cidr = "10.10.10.0/24"
+  }
+  app-b = {
+    cidr = "10.10.20.0/24"
+  }
+}
+
+# Console-precreated or console-checked values.
+internet_gateway_id          = "replace-with-internet-gateway-id"
+nks_node_flavor_id           = "replace-with-flavor-uuid"
+nks_keypair_name             = "replace-with-keypair-name"
+nks_node_image_id            = "replace-with-nks-node-image-uuid"
+nks_external_network_id      = "replace-with-external-network-id"
+nks_external_subnet_id_list  = "replace-with-external-subnet-id"
+nks_kubernetes_version       = "v1.33.4"
+nks_calico_version           = "v3.30.2-nks1"
+nks_coredns_version          = "1.8.4-nks1"
+
+management_cidrs = ["203.0.113.10/32"]
+
+object_storage_containers = {
+  artifacts = {
+    name = "sgh-dev-artifacts"
+    metadata = {
+      purpose = "ci-artifacts"
+    }
+  }
+  backups = {
+    name = "sgh-dev-backups"
+    metadata = {
+      purpose = "backup"
+    }
+  }
+  logs = {
+    name = "sgh-dev-pipeline-logs"
+    metadata = {
+      purpose = "pipeline-logs"
+    }
+  }
+}
+

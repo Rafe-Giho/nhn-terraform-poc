@@ -1,0 +1,30 @@
+# Copy this file to terraform.tfvars and fill real values.
+# Do not commit terraform.tfvars.
+
+kubeconfig_path    = "C:/Users/user/Downloads/ta-sgh-vxlan-istio-ambient-cls_kubeconfig.yaml"
+kubeconfig_context = "nks_ta-sgh-vxlan-istio-ambient-cls_2fefc532-2057-48b8-8ab3-b67e82640ff5"
+
+project_prefix = "sgh"
+environment    = "dev"
+
+# Extra Helm release example for GitLab Runner.
+# Do not put runner tokens directly in this file. Use a pre-created Kubernetes Secret,
+# External Secrets, or CI secret injection.
+extra_helm_releases = {
+  # gitlab_runner = {
+  #   name       = "gitlab-runner"
+  #   namespace  = "cicd"
+  #   repository = "https://charts.gitlab.io"
+  #   chart      = "gitlab-runner"
+  #   version    = "0.71.0"
+  #   values = [
+  #     yamlencode({
+  #       gitlabUrl = "https://gitlab.com"
+  #       runners = {
+  #         executor = "kubernetes"
+  #       }
+  #     })
+  #   ]
+  # }
+}
+
