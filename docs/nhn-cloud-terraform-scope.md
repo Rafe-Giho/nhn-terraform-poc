@@ -1,227 +1,155 @@
-# NHN Cloud Terraform Provider 분석 및 구축 범위
+# NHN Cloud Terraform 구축 범위와 표준 아키텍처
 
 조사 기준일: 2026-05-12  
-대상: 일반 NHN Cloud 기준. 공공기관용 NHN Cloud는 `auth_url`, 리전, 서비스 제공 범위가 다를 수 있으므로 별도 검증이 필요합니다.
+기준 provider: `nhn-cloud/nhncloud` `v1.0.8`  
+검증 기준: Terraform Registry, NHN Cloud 사용자 가이드, provider GitHub 저장소의 `v1.0.8` 태그 `14725d0` / `nhncloud/provider.go`
 
-## 핵심 결론
+## 결론
 
-- 주 provider는 `nhn-cloud/nhncloud`를 사용합니다. Terraform Registry 기준 최신 버전은 `1.0.8`이며, GitHub 릴리스도 `v1.0.8`이 최신으로 표시됩니다.
-- Terraform으로 안정적으로 표준화할 수 있는 범위는 IaaS 중심입니다. Compute, VPC 일부, Load Balancer, Security Group, Floating IP, Block Storage, NAS, NKS, Key Manager 일부가 핵심 범위입니다.
-- RDS, Monitoring, DNS Plus, NAT Gateway, Transit Hub, VPN, Direct Connect, IAM/조직/프로젝트, CloudTrail 등은 공식 provider 리소스로 확인되지 않았습니다. 이런 서비스는 콘솔/API/별도 자동화로 분리하는 편이 안전합니다.
-- Object Storage는 공식 가이드에 Terraform 리소스가 언급되어 있으나, S3 호환 API도 함께 제공됩니다. PoC에서는 provider schema로 실제 지원 여부를 먼저 검증하고, 필요 시 `hashicorp/aws` provider를 S3 호환 모드로 제한 사용합니다.
-- OpenStack provider는 NHN Cloud의 일부 OpenStack 호환 API에 붙일 수 있는 가능성은 있지만, NHN Cloud 문서가 필드와 메서드가 제한된다고 명시합니다. 표준 아키텍처의 기본 provider로 쓰지 않습니다.
+`nhn-cloud/nhncloud` provider는 `v1.0.8` 기준 `ResourcesMap` 110개, `DataSourcesMap` 53개를 노출한다. Terraform Registry에서 내려받은 provider schema와 이름 목록까지 대조했고 차이는 없다. 다만 NHN Cloud 사용자 가이드와 provider 문서에 명확히 설명된 운영 안전 범위는 그보다 좁다.
 
-## 사용할 수 있는 Terraform Provider
+따라서 구축 전략은 다음처럼 나눈다.
 
-| 구분 | Provider | 사용 판단 | 주요 용도 | 주의 |
-|---|---|---:|---|---|
-| 기본 | `nhn-cloud/nhncloud` | 권장 | NHN Cloud 공식 Terraform 리소스 관리 | 버전을 고정하고 provider schema 검증 필요 |
-| 보조 | `hashicorp/aws` | 제한 사용 | Object Storage S3 호환 API로 버킷/오브젝트 관리 | S3 외 AWS API 호출은 실패 가능. endpoint/검증 skip 설정 필요 |
-| 보조 | `terraform-provider-openstack/openstack` | 제한 사용 | OpenStack 호환 Neutron/Swift 계열 실험 | NHN Cloud 호환 API는 메서드/필드가 제한됨 |
-| 비권장 | `null`, `external`, local-exec API 호출 | 예외만 | provider 미지원 API 호출 | 상태 동기화, 재시도, 삭제 안정성이 낮음 |
-
-## 공식 Provider 구축 가능 범위
-
-| 영역 | Terraform으로 구축 가능 | 대표 리소스 | 비고 |
-|---|---|---|---|
-| Compute | 인스턴스, 키페어, 블록 스토리지 연결 | `nhncloud_compute_instance_v2`, `nhncloud_compute_keypair_v2`, `nhncloud_compute_volume_attach_v2` | Terraform으로 키페어 생성 시 private key가 state에 저장될 수 있어 외부 생성/등록 권장 |
-| Image/Flavor 조회 | 이미지, 인스턴스 타입 조회 | `data.nhncloud_images_image_v2`, `data.nhncloud_compute_flavor_v2` | 이미지명은 변경될 수 있어 exact name과 `most_recent` 정책 필요 |
-| Network | VPC, 서브넷, 포트, Floating IP, 라우팅 테이블, 보안 그룹 | `nhncloud_networking_vpc_v2`, `nhncloud_networking_vpcsubnet_v2`, `nhncloud_networking_port_v2`, `nhncloud_networking_floatingip_v2`, `nhncloud_networking_secgroup_v2` | 공식 가이드상 VPC 일부 리소스만 생성 지원 |
-| Internet Gateway 연결 | 기존 Gateway를 라우팅 테이블에 연결 | `nhncloud_networking_routingtable_attach_gateway_v2` | Internet Gateway 자체 생성은 콘솔 선행으로 보는 것이 안전 |
-| Load Balancer | LB, listener, pool, member, monitor | `nhncloud_lb_loadbalancer_v2`, `nhncloud_lb_listener_v2`, `nhncloud_lb_pool_v2`, `nhncloud_lb_member_v2`, `nhncloud_lb_monitor_v2` | `shared`/`dedicated` 타입 검증 필요 |
-| Block Storage | 볼륨 생성, 스냅샷 기반 생성, 인스턴스 연결 | `nhncloud_blockstorage_volume_v2` | encryption 사용 시 SKM 정보 관리 필요 |
-| Object Storage | 컨테이너/오브젝트 | `nhncloud_objectstorage_container_v1`, `nhncloud_objectstorage_object_v1` | 최신 provider schema에서 반드시 재확인 |
-| NAS | NAS 볼륨, 인터페이스, 복제 | `nhncloud_nas_storage_volume_v1`, `nhncloud_nas_storage_volume_interface_v1`, `nhncloud_nas_storage_volume_mirror_v1` | CIFS 인증 정보, 암호화 키 저장소는 선행 준비 필요 |
-| Container/NKS | NKS 클러스터, 노드 그룹, resize/upgrade | `nhncloud_kubernetes_cluster_v1`, `nhncloud_kubernetes_nodegroup_v1`, `nhncloud_kubernetes_cluster_resize_v1`, `nhncloud_kubernetes_nodegroup_upgrade_v1` | Kubernetes/addon 버전은 리전별 지원값 검증 필요 |
-| Key Manager | secret, secret container | `nhncloud_keymanager_secret_v1`, `nhncloud_keymanager_container_v1` | 민감값 state 저장 정책 필요 |
-
-## Terraform 범위 밖으로 둘 항목
-
-| 영역 | 제외 사유 | 처리 방식 |
+| 등급 | 의미 | 적용 |
 |---|---|---|
-| IAM, 조직, 프로젝트, 계정 거버넌스 | 공식 provider 리소스 확인 안 됨 | 콘솔/운영 절차/별도 API 자동화 |
-| RDS for MySQL/PostgreSQL/MariaDB/MS-SQL, EasyCache | 공식 provider 리소스 확인 안 됨 | 콘솔 또는 서비스 API 기반 별도 프로비저닝 |
-| DNS Plus, Private DNS | 공식 provider 리소스 확인 안 됨 | 콘솔/API. 외부 DNS provider 사용 가능 |
-| NAT Gateway, Transit Hub, VPN, Direct Connect, Peering/Colocation Gateway, Service Gateway | 공식 provider 리소스 확인 안 됨 | 콘솔 생성 후 ID를 Terraform 변수로 주입 |
-| Flow Log, Network ACL, Traffic Mirroring | 공식 provider 리소스 확인 안 됨 | 콘솔/API |
-| Monitoring, CloudTrail, Resource Watcher | 공식 provider 리소스 확인 안 됨 | 운영 도구/콘솔/API |
-| AI, Search, Game, Mobile, Collaboration 계열 | IaaS provider 범위 밖 | 서비스별 SDK/API |
+| A | NHN Cloud 문서 또는 provider docs에 명확히 있는 리소스 | 표준 Terraform 모듈 우선 대상 |
+| B | provider 코드에는 있지만 NHN Cloud 문서화가 약한 리소스 | dev smoke 검증 후 제한 적용 |
+| C | provider에도 없거나 NHN Cloud API/콘솔만 확인된 서비스 | Terraform 표준 범위 밖. 콘솔/API/별도 자동화 |
+
+전체 리소스 목록은 [provider inventory](./nhn-cloud-terraform-provider-inventory.md)에 분리했다. 실제 구축 절차는 [NHN Cloud Terraform 구축 가이드](./nhn-cloud-terraform-build-guide.md)를 따른다.
 
 ## 표준 아키텍처
 
-```mermaid
-flowchart TB
-  user["User / Client"] --> dns["DNS / External DNS\n(provider 범위 밖 또는 별도 provider)"]
-  dns --> fip["Floating IP"]
-  fip --> lb["NHN Load Balancer"]
+![NHN Cloud 표준 아키텍처](./assets/nhn-cloud-standard-architecture.svg)
 
-  subgraph nhn["NHN Cloud Project / Region"]
-    subgraph net["VPC"]
-      rt["Routing Table"]
-      pub["Public Subnet"]
-      app["Private App Subnet"]
-      data["Private Data Subnet"]
-      sg["Security Groups"]
-    end
+이 그림은 NHN Cloud 런타임과 NKS 위의 플랫폼 구성을 표시한다. Terraform 검증 하네스는 배포/검증 절차이므로 그림에 넣지 않고 별도 섹션에서 다룬다.
 
-    lb --> pub
-    pub --> app
-    app --> nks["NKS Cluster / Node Groups"]
-    app --> vm["Compute Instances"]
-    nks --> bs["Block Storage"]
-    vm --> bs
-    app --> nas["NAS Volume"]
-    app --> obj["Object Storage\n(S3/Swift compatible)"]
-    km["Key Manager"] -. secrets/certs .-> lb
-    km -. secrets .-> nks
-    data --> db["Managed DB\n(Terraform 범위 밖)"]
-  end
+구성 원칙:
 
-  subgraph iac["IaC Execution Harness"]
-    git["Git Repository"] --> ci["CI / Harness Pipeline"]
-    ci --> fmt["fmt / validate / lint"]
-    fmt --> policy["policy checks"]
-    policy --> plan["terraform plan"]
-    plan --> approval["manual approval"]
-    approval --> apply["terraform apply"]
-    state["Remote State\n(Terraform Cloud 또는 검증된 S3 backend)"] <--> plan
-    state <--> apply
-  end
+- NHN Cloud 쪽은 VPC, Subnet, Routing Table, Security Group, NKS, Object Storage, Block Storage, NAS, Key Manager를 우선 표준화한다.
+- NKS 내부는 `Argo CD`, `cert-manager`, CI runner, Gateway/Ingress, StorageClass를 별도 Kubernetes platform stack으로 관리한다.
+- NAT/VPN/Transit Hub/RDS처럼 문서화 또는 provider 실사용 검증이 부족한 영역은 분홍색 박스로 표시했고, 운영 적용 전 별도 smoke 검증 또는 콘솔 선행 리소스로 둔다.
 
-  apply --> nhn
-```
+## Terraform으로 생성/관리/삭제 가능한 우선 범위
 
-## 권장 Terraform 구성
+아래 표는 운영 표준 모듈로 먼저 만들 범위다.
+
+| 영역 | 가능한 작업 | 대표 리소스 | 판단 |
+|---|---|---|---|
+| VPC | VPC 생성/변경/삭제 | `nhncloud_networking_vpc_v2` | A |
+| VPC Subnet | 서브넷 생성/변경/삭제 | `nhncloud_networking_vpcsubnet_v2` | A |
+| Routing Table | 라우팅 테이블 생성/변경/삭제, 게이트웨이 연결 | `nhncloud_networking_routingtable_v2`, `nhncloud_networking_routingtable_attach_gateway_v2` | A |
+| Security Group | 보안 그룹과 ingress/egress rule 생성/변경/삭제 | `nhncloud_networking_secgroup_v2`, `nhncloud_networking_secgroup_rule_v2` | A |
+| Port | 네트워크 포트 생성/변경/삭제 | `nhncloud_networking_port_v2` | A |
+| Floating IP | 공인 IP 생성/연결/해제/삭제 | `nhncloud_networking_floatingip_v2`, `nhncloud_networking_floatingip_associate_v2` | A |
+| Compute | 인스턴스 생성/변경/삭제 | `nhncloud_compute_instance_v2` | A |
+| Key Pair | 키페어 생성/등록/삭제 | `nhncloud_compute_keypair_v2` | A |
+| Volume Attach | 인스턴스에 블록 스토리지 연결/해제 | `nhncloud_compute_volume_attach_v2` | A |
+| Block Storage | 볼륨 생성/변경/삭제, 스냅샷 기반 생성 | `nhncloud_blockstorage_volume_v2` | A |
+| Load Balancer | LB, listener, pool, member, health monitor 생성/변경/삭제 | `nhncloud_lb_loadbalancer_v2`, `nhncloud_lb_listener_v2`, `nhncloud_lb_pool_v2`, `nhncloud_lb_member_v2`, `nhncloud_lb_monitor_v2` | A |
+| NKS | 클러스터/노드그룹 생성, resize, nodegroup upgrade | `nhncloud_kubernetes_cluster_v1`, `nhncloud_kubernetes_nodegroup_v1`, `nhncloud_kubernetes_cluster_resize_v1`, `nhncloud_kubernetes_nodegroup_upgrade_v1` | A |
+| NAS | NAS 볼륨, 인터페이스, 복제 생성/변경/삭제 | `nhncloud_nas_storage_volume_v1`, `nhncloud_nas_storage_volume_interface_v1`, `nhncloud_nas_storage_volume_mirror_v1` | A |
+| Key Manager | secret, container 생성/조회/삭제 | `nhncloud_keymanager_secret_v1`, `nhncloud_keymanager_container_v1` | A |
+| Object Storage | container/object 생성/변경/삭제 | `nhncloud_objectstorage_container_v1`, `nhncloud_objectstorage_object_v1` | A- |
+
+`Object Storage`는 NHN Cloud Terraform 가이드에 리소스명이 언급되고 provider 코드에도 등록되어 있다. 다만 현재 provider `docs/resources`에는 별도 md가 없으므로 첫 PoC에서 실제 CRUD smoke를 반드시 수행한다.
+
+## Provider 코드상 추가 노출 범위
+
+아래 영역은 provider 코드에 등록되어 있으므로 Terraform resource type 자체는 존재한다. 하지만 NHN Cloud 사용자 가이드에서 Terraform 표준 범위로 명확히 설명되지 않았거나, OpenStack provider 계열 리소스를 그대로 노출한 성격이 강해 dev 검증 전에는 운영 표준으로 보지 않는다.
+
+| 영역 | 포함 예시 | 운영 판단 |
+|---|---|---|
+| Block Storage v3/QoS/Quota | `nhncloud_blockstorage_volume_v3`, `nhncloud_blockstorage_qos_v3`, `nhncloud_blockstorage_quotaset_v3` | B |
+| Compute admin/확장 | `nhncloud_compute_flavor_v2`, `nhncloud_compute_aggregate_v2`, `nhncloud_compute_servergroup_v2`, `nhncloud_compute_quotaset_v2` | B |
+| DB | `nhncloud_db_instance_v1`, `nhncloud_db_user_v1`, `nhncloud_db_configuration_v1`, `nhncloud_db_database_v1` | B |
+| DNS | `nhncloud_dns_zone_v2`, `nhncloud_dns_recordset_v2` | B |
+| FW/VPNaaS | `nhncloud_fw_*`, `nhncloud_vpnaas_*` | B |
+| Identity | `nhncloud_identity_*` | B |
+| Image 관리 | `nhncloud_images_image_v2`, image access 리소스 | B |
+| LB 고급 | `nhncloud_lb_l7policy_v2`, `nhncloud_lb_l7rule_v2`, `nhncloud_lb_quota_v2`, v1 LB 리소스 | B |
+| Neutron/OpenStack 네트워크 | router, subnetpool, QoS, trunk, RBAC, port forwarding 등 | B |
+| Shared Filesystem(OpenStack Manila) | `nhncloud_sharedfilesystem_*` | B |
+| Orchestration | `nhncloud_orchestration_stack_v1` | B |
+| Object Storage tempurl | `nhncloud_objectstorage_tempurl_v1` | B |
+
+정확한 resource/data source 이름은 [provider inventory](./nhn-cloud-terraform-provider-inventory.md)에 전부 기록했다.
+
+## Terraform 표준 범위 밖
+
+아래는 이번 표준 아키텍처에서 Terraform 1차 범위로 잡지 않는다.
+
+| 영역 | 이유 | 처리 |
+|---|---|---|
+| 조직/프로젝트/IAM 거버넌스 | provider에는 일부 identity 리소스가 있으나 NHN Cloud 운영 권한 모델과 충돌 가능 | 콘솔/운영 절차 우선 |
+| NAT Gateway, Transit Hub, Direct Connect, Peering/Colocation Gateway | 공식 Terraform 문서화 부족 | 콘솔 생성 후 ID 주입 또는 API 별도 검증 |
+| Monitoring, CloudTrail, Resource Watcher | provider 리소스 확인 안 됨 | 콘솔/API/운영 도구 |
+| Managed 서비스 전반 | 서비스별 API와 provider 지원 범위 차이 큼 | 별도 PoC 후 편입 |
+| Public API 직접 호출 | Terraform state와 drift 관리 약함 | 마지막 수단 |
+
+## 하네스 반영 방식
+
+하네스는 문서 본문에만 적지 않고 파일로 분리했다.
+
+| 파일 | 역할 |
+|---|---|
+| [AGENTS.md](../AGENTS.md) | 이 저장소에서 작업할 때 따라야 하는 provider/검증/승인 규칙 |
+| [harness/README.md](../harness/README.md) | 하네스 실행 순서와 승인 기준 |
+| [extract-provider-inventory.ps1](../harness/scripts/extract-provider-inventory.ps1) | provider 코드의 `ResourcesMap`, `DataSourcesMap` 추출 |
+| [static-check.ps1](../harness/scripts/static-check.ps1) | `fmt`, `init -backend=false`, `validate`, `tflint`, `checkov/tfsec` 실행 |
+| [plan-json.ps1](../harness/scripts/plan-json.ps1) | `terraform plan`과 plan JSON 생성 |
+
+검증 gate:
+
+1. provider inventory 확인
+2. 정적 검증
+3. plan JSON 생성
+4. 공개 인바운드, destroy, 과도한 Floating IP, 운영 `-target` 사용 여부 확인
+5. 사용자 승인 후 dev smoke 적용
+6. 운영은 `refresh-only plan`으로 drift 감지
+
+## 권장 모듈 구조
 
 ```text
 infra/
   envs/
-    dev/
+    dev/              # NHN Cloud foundation
     stage/
     prod/
+  platform/
+    dev/              # Kubernetes platform addons after NKS kubeconfig is ready
   modules/
     network/
     security/
-    load-balancer/
-    compute/
     nks/
-    block-storage/
-    nas/
     object-storage/
-  harness/
-    policies/
-    smoke/
+    k8s-platform/
+harness/
 docs/
-  nhn-cloud-terraform-scope.md
 ```
 
-원칙:
+운영 원칙:
 
-- root module은 환경별로 분리합니다. `envs/dev`, `envs/prod`가 서로 다른 state를 가져야 합니다.
-- 공통 구성은 module로 분리하되, 초기 PoC에서는 `network`, `security`, `compute/nks`, `storage` 정도만 만듭니다.
-- 콘솔 선행 리소스는 `variables.tf`에 ID로 주입합니다. 예: Internet Gateway, NAT Gateway, Managed DB, CIFS 인증 정보, SKM key store.
-- 모든 provider 버전은 고정합니다. 예: `~> 1.0.8`이 아니라 PoC 중에는 `= 1.0.8` 권장.
-- 민감값은 `*.tfvars`에 평문 저장하지 않고 `TF_VAR_*` 또는 CI secret로 주입합니다.
+- provider 버전은 `= 1.0.8`처럼 정확히 고정한다.
+- 환경별 state는 반드시 분리한다.
+- 콘솔 선행 리소스는 module 내부에서 만들지 말고 변수로 ID를 주입한다.
+- `terraform apply`는 dev smoke 후 stage/prod로 승격한다.
+- `*.tfvars`, state, plan JSON은 커밋하지 않는다.
 
-## 하네스 엔지니어링 반영안
+## 다음 PoC 순서
 
-여기서 하네스는 특정 SaaS 제품이 아니라, Terraform 작업을 반복 가능하게 검증하는 실행/검증 체계를 의미합니다.
-
-### 1. Provider Capability Harness
-
-목적: 문서와 실제 provider schema 차이를 줄입니다.
-
-```bash
-terraform init -backend=false
-terraform providers schema -json > harness/provider-schema/nhncloud-1.0.8.json
-```
-
-이 JSON에서 `resource_schemas`와 `data_source_schemas`를 추출해 지원 리소스 표를 자동 생성합니다. Object Storage처럼 문서와 provider docs가 어긋날 수 있는 영역은 이 단계에서 확정합니다.
-
-### 2. Static Validation Harness
-
-최소 검증 순서:
-
-```bash
-terraform fmt -check -recursive
-terraform init -backend=false
-terraform validate
-tflint --init
-tflint --recursive
-```
-
-보안 검사는 선택이 아니라 기본 gate로 둡니다.
-
-```bash
-checkov -d infra
-# 또는
-tfsec infra
-```
-
-### 3. Plan Harness
-
-`apply` 전에 항상 저장된 plan을 만듭니다.
-
-```bash
-terraform plan -out=tfplan
-terraform show -json tfplan > tfplan.json
-```
-
-`tfplan.json`에는 다음 정책을 적용합니다.
-
-- `0.0.0.0/0` 인바운드는 80/443 외 금지
-- SSH/RDP는 지정된 관리 CIDR만 허용
-- `delete_on_termination = false` 볼륨은 명시적 태그/이름 규칙 요구
-- Floating IP 생성 수 제한
-- `destroy` 액션은 수동 승인 필수
-- 운영 환경은 `-target` 사용 금지
-
-### 4. Smoke Harness
-
-비용과 위험이 낮은 순서로 검증합니다.
-
-1. `network-smoke`: VPC, subnet, security group만 생성/삭제
-2. `compute-smoke`: 최소 사양 인스턴스 1대, 볼륨 1개, SG 연결
-3. `lb-smoke`: shared LB, listener, pool, member 연결
-4. `nks-smoke`: 최소 노드 그룹 클러스터. 비용이 크므로 별도 승인 필요
-5. `nas-smoke`: 최소 300GB 요구로 비용 영향이 있어 별도 승인 필요
-
-### 5. Drift Harness
-
-운영은 주기적으로 read-only plan을 실행합니다.
-
-```bash
-terraform plan -refresh-only
-```
-
-결과는 Slack/메일로 알리고, 자동 apply는 하지 않습니다. drift가 있으면 콘솔 변경인지 Terraform 누락인지 먼저 판정합니다.
-
-### 6. Import Harness
-
-기존 NHN Cloud 리소스가 있으면 바로 재생성하지 말고 import부터 합니다.
-
-```bash
-terraform import nhncloud_blockstorage_volume_v2.example <block_storage_id>
-terraform import nhncloud_networking_secgroup_v2.example <security_group_id>
-```
-
-import 후 `terraform plan`이 no-op에 가깝게 나오도록 속성을 맞춘 뒤 모듈화합니다.
-
-## PoC 진행 순서
-
-1. provider `1.0.8`로 schema 추출
-2. 지원 리소스 표 자동 생성
-3. `network`와 `security` 모듈 작성
-4. `compute` 또는 `nks` 중 하나만 선택해 smoke stack 작성
-5. `fmt/validate/tflint/checkov/plan` 하네스 적용
-6. 콘솔 선행 리소스 목록 확정
-7. 운영 표준 아키텍처를 dev/stage/prod로 확장
+1. `provider inventory`를 baseline으로 확정
+2. `network/security` 모듈 작성
+3. `compute` 또는 `nks` 중 하나를 선택해 smoke stack 작성
+4. `harness/scripts/static-check.ps1` 실행
+5. 사용자 승인 후 dev 환경에서 최소 리소스 apply
+6. 실제 성공한 리소스만 운영 표준 등급 A로 승격
 
 ## 참고 출처
 
 - NHN Cloud Terraform 사용 가이드: https://docs.nhncloud.com/ko/Compute/Instance/ko/terraform-guide/
-- NHN Cloud Terraform Registry: https://registry.terraform.io/providers/nhn-cloud/nhncloud/latest/docs
-- NHN Cloud Terraform provider GitHub: https://github.com/nhn-cloud/terraform-provider-nhncloud
 - NHN Cloud NAS Terraform 사용 가이드: https://docs.nhncloud.com/ko/Storage/NAS/ko/terraform-guide/
-- NHN Cloud Object Storage S3 호환 API 가이드: https://docs.nhncloud.com/ko/Storage/Object%20Storage/ko/s3-api-guide/
-- NHN Cloud VPC OpenStack 호환 API 가이드: https://docs.nhncloud.com/ko/Network/VPC/ko/public-api-compat/
+- Terraform Registry `nhn-cloud/nhncloud`: https://registry.terraform.io/providers/nhn-cloud/nhncloud/latest/docs
+- NHN Cloud provider GitHub: https://github.com/nhn-cloud/terraform-provider-nhncloud
+- NHN Cloud Object Storage S3 호환 API: https://docs.nhncloud.com/ko/Storage/Object%20Storage/ko/s3-api-guide/
+- NHN Cloud VPC OpenStack 호환 API: https://docs.nhncloud.com/ko/Network/VPC/ko/public-api-compat/

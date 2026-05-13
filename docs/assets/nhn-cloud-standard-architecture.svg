@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">NHN Cloud 표준 아키텍처</title>
+  <desc id="desc">NHN Cloud VPC, NKS, Kubernetes CI/CD 플랫폼, Object Storage, Cinder/NAS 기반 표준 아키텍처</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#314158"/>
+    </marker>
+    <style>
+      .bg { fill: #f7f9fc; }
+      .zone { fill: #ffffff; stroke: #94a3b8; stroke-width: 2; rx: 12; }
+      .external { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.5; rx: 10; }
+      .public { fill: #eef6ff; stroke: #70a5d8; stroke-width: 1.7; rx: 10; }
+      .private { fill: #f1f8f4; stroke: #74aa88; stroke-width: 1.7; rx: 10; }
+      .platform { fill: #f5f0ff; stroke: #9b7bd3; stroke-width: 1.7; rx: 10; }
+      .data { fill: #fff8e8; stroke: #d6a84f; stroke-width: 1.7; rx: 10; }
+      .manual { fill: #fff1f2; stroke: #e16f7a; stroke-width: 1.5; rx: 8; }
+      .box { fill: #ffffff; stroke: #475569; stroke-width: 1.5; rx: 8; }
+      .title { font: 700 25px Arial, "Malgun Gothic", sans-serif; fill: #0f172a; }
+      .section { font: 700 17px Arial, "Malgun Gothic", sans-serif; fill: #1e293b; }
+      .label { font: 600 14px Arial, "Malgun Gothic", sans-serif; fill: #1e293b; }
+      .small { font: 12px Arial, "Malgun Gothic", sans-serif; fill: #475569; }
+      .tiny { font: 11px Arial, "Malgun Gothic", sans-serif; fill: #64748b; }
+      .line { stroke: #314158; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #64748b; stroke-width: 1.8; stroke-dasharray: 6 5; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1440" height="920"/>
+  <text class="title" x="40" y="48">NHN Cloud 표준 아키텍처</text>
+  <text class="small" x="40" y="72">NKS 중심 서비스 플랫폼, Kubernetes CI/CD, Object Storage, Cinder/NAS 스토리지를 포함한 표준 설계</text>
+
+  <rect class="external" x="40" y="105" width="250" height="245"/>
+  <text class="section" x="65" y="137">External</text>
+  <rect class="box" x="75" y="165" width="180" height="42"/>
+  <text class="label" x="118" y="191">Developer</text>
+  <rect class="box" x="75" y="225" width="180" height="42"/>
+  <text class="label" x="116" y="251">Git Repository</text>
+  <rect class="box" x="75" y="285" width="180" height="42"/>
+  <text class="label" x="124" y="311">DNS Zone</text>
+
+  <rect class="zone" x="330" y="105" width="1065" height="760"/>
+  <text class="section" x="360" y="138">NHN Cloud Project / Region</text>
+
+  <rect class="public" x="370" y="170" width="985" height="125"/>
+  <text class="section" x="400" y="203">Public Entry</text>
+  <rect class="box" x="415" y="230" width="155" height="42"/>
+  <text class="label" x="458" y="256">Floating IP</text>
+  <rect class="box" x="620" y="230" width="185" height="42"/>
+  <text class="label" x="660" y="256">NKS API LB</text>
+  <rect class="box" x="855" y="230" width="205" height="42"/>
+  <text class="label" x="891" y="256">App LoadBalancer</text>
+  <rect class="box" x="1110" y="230" width="190" height="42"/>
+  <text class="label" x="1148" y="256">TLS / Key Manager</text>
+
+  <path class="line" d="M255 306 C310 306, 330 251, 415 251"/>
+  <path class="line" d="M570 251 L620 251"/>
+  <path class="line" d="M805 251 L855 251"/>
+  <path class="dash" d="M1110 251 L1060 251"/>
+
+  <rect class="private" x="370" y="325" width="985" height="245"/>
+  <text class="section" x="400" y="358">Private NKS Service Platform</text>
+  <rect class="box" x="415" y="390" width="190" height="58"/>
+  <text class="label" x="456" y="415">NKS Cluster</text>
+  <text class="tiny" x="456" y="434">Calico, CoreDNS, Cinder CSI</text>
+  <rect class="box" x="650" y="390" width="205" height="58"/>
+  <text class="label" x="690" y="415">Worker Node Groups</text>
+  <text class="tiny" x="690" y="434">multi-AZ, autoscale option</text>
+  <rect class="box" x="900" y="390" width="185" height="58"/>
+  <text class="label" x="949" y="415">App Namespaces</text>
+  <text class="tiny" x="949" y="434">web, was, db, batch</text>
+  <rect class="box" x="1130" y="390" width="170" height="58"/>
+  <text class="label" x="1172" y="415">Gateway API</text>
+  <text class="tiny" x="1172" y="434">NGINX / ingress</text>
+
+  <rect class="box" x="415" y="490" width="190" height="42"/>
+  <text class="label" x="465" y="516">VPC Subnets</text>
+  <rect class="box" x="650" y="490" width="205" height="42"/>
+  <text class="label" x="701" y="516">Security Groups</text>
+  <rect class="manual" x="900" y="490" width="185" height="42"/>
+  <text class="label" x="937" y="516">NAT / Transit</text>
+  <rect class="manual" x="1130" y="490" width="170" height="42"/>
+  <text class="label" x="1175" y="516">RDS option</text>
+
+  <path class="line" d="M958 272 C958 330, 510 330, 510 390"/>
+  <path class="line" d="M958 272 C958 340, 1215 340, 1215 390"/>
+
+  <rect class="platform" x="370" y="600" width="585" height="190"/>
+  <text class="section" x="400" y="633">Kubernetes CI/CD Platform</text>
+  <rect class="box" x="415" y="665" width="160" height="42"/>
+  <text class="label" x="467" y="691">Argo CD</text>
+  <rect class="box" x="615" y="665" width="170" height="42"/>
+  <text class="label" x="654" y="691">CI Runner</text>
+  <rect class="box" x="415" y="725" width="160" height="42"/>
+  <text class="label" x="455" y="751">cert-manager</text>
+  <rect class="box" x="615" y="725" width="170" height="42"/>
+  <text class="label" x="652" y="751">Monitoring</text>
+
+  <path class="line" d="M255 246 C310 246, 330 686, 415 686"/>
+  <path class="line" d="M575 686 L615 686"/>
+  <path class="line" d="M575 686 C650 625, 900 610, 992 448"/>
+
+  <rect class="data" x="990" y="600" width="365" height="190"/>
+  <text class="section" x="1020" y="633">Storage / Artifacts</text>
+  <rect class="box" x="1030" y="665" width="140" height="42"/>
+  <text class="label" x="1062" y="691">Object Storage</text>
+  <rect class="box" x="1200" y="665" width="120" height="42"/>
+  <text class="label" x="1228" y="691">Cinder PV</text>
+  <rect class="box" x="1030" y="725" width="140" height="42"/>
+  <text class="label" x="1068" y="751">NAS</text>
+  <rect class="manual" x="1200" y="725" width="120" height="42"/>
+  <text class="label" x="1232" y="751">Backup</text>
+
+  <path class="line" d="M785 686 C890 686, 930 686, 1030 686"/>
+  <path class="line" d="M992 448 C1040 570, 1260 570, 1260 665"/>
+  <path class="line" d="M992 448 C990 570, 1100 570, 1100 725"/>
+
+  <rect class="external" x="40" y="390" width="250" height="170"/>
+  <text class="section" x="65" y="422">Pre-created / Checked</text>
+  <text class="small" x="75" y="455">API endpoint, tenant ID</text>
+  <text class="small" x="75" y="480">Keypair, flavor, image</text>
+  <text class="small" x="75" y="505">External network/subnet</text>
+  <text class="small" x="75" y="530">DNS, certs, quotas</text>
+
+  <rect class="external" x="40" y="600" width="250" height="190"/>
+  <text class="section" x="65" y="632">Terraform Stacks</text>
+  <text class="small" x="75" y="665">1. infra/envs/dev</text>
+  <text class="small" x="75" y="690">VPC, NKS, Object Storage</text>
+  <text class="small" x="75" y="725">2. infra/platform/dev</text>
+  <text class="small" x="75" y="750">K8s namespaces, Helm addons</text>
+
+  <rect class="external" x="370" y="815" width="985" height="36"/>
+  <text class="small" x="400" y="838">분홍색 영역은 운영 표준 편입 전 콘솔 선행 생성 또는 별도 PoC 검증이 필요한 구성요소.</text>
+</svg>
