@@ -1,6 +1,6 @@
 # NHN Cloud Terraform Project
 
-이 디렉터리는 NHN Cloud 표준 아키텍처를 Terraform으로 구성하기 위한 코드 골격이다.
+이 디렉터리는 NHN Cloud 표준 아키텍처를 Terraform으로 구성하기 위한 코드 골격이다. 현재 구현은 클라우드 네이티브 전환안의 foundation/platform을 기준으로 한다.
 
 ## Stack 구분
 
@@ -8,6 +8,8 @@
 |---|---|---|
 | Cloud foundation | `envs/dev` | VPC, subnet, security group, object storage, NKS |
 | Kubernetes platform | `platform/dev` | NKS 내부 namespace, StorageClass, Argo CD, cert-manager 등 |
+
+공공기관 IaaS 3-tier 전환안은 설계와 provider 범위가 문서화되어 있으며, 실제 코드 적용 시 `compute`, `load-balancer`, `block-storage` 모듈을 추가해 별도 stack으로 분리한다.
 
 ## 실행 순서
 
@@ -22,4 +24,3 @@
 9. `terraform -chdir=infra/platform/dev plan`
 
 운영 적용 전에는 `harness/scripts/static-check.ps1`과 plan JSON 리뷰를 수행한다.
-

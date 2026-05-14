@@ -1,6 +1,6 @@
 # NHN Cloud Terraform PoC
 
-NHN Cloud에서 Terraform으로 생성/관리할 수 있는 리소스 범위를 분석하고, NKS 중심 표준 아키텍처와 Terraform 프로젝트 골격을 정리한 저장소입니다.
+NHN Cloud에서 Terraform으로 생성/관리할 수 있는 리소스 범위를 분석하고, 공공기관 IaaS 3-tier 전환안과 클라우드 네이티브 전환안의 표준 아키텍처와 Terraform 프로젝트 골격을 정리한 저장소입니다.
 
 기준 provider:
 
@@ -13,9 +13,13 @@ NHN Cloud에서 Terraform으로 생성/관리할 수 있는 리소스 범위를 
 docs/
   nhn-cloud-terraform-scope.md              # 구축 가능 범위와 표준 아키텍처
   nhn-cloud-terraform-provider-inventory.md # provider 전체 리소스/데이터소스 목록
-  nhn-cloud-terraform-build-guide.md        # 실제 구축 절차 가이드
+  nhn-cloud-terraform-build-guide.md        # 구축 가이드 진입점
+  nhn-cloud-public-iaas-3tier-build-guide.md
+  nhn-cloud-cloud-native-build-guide.md
   assets/
-    nhn-cloud-standard-architecture.svg     # 표준 아키텍처 그림
+    nhn-cloud-standard-architecture.svg     # 표준 아키텍처 비교도
+    nhn-cloud-public-iaas-3tier-architecture.svg
+    nhn-cloud-cloud-native-architecture.svg
 infra/
   envs/dev/                                 # NHN Cloud foundation stack
   platform/dev/                             # NKS 내부 Kubernetes platform stack
@@ -28,18 +32,22 @@ harness/
 
 1. [구축 범위와 표준 아키텍처](./docs/nhn-cloud-terraform-scope.md)
 2. [NHN Cloud Terraform 구축 가이드](./docs/nhn-cloud-terraform-build-guide.md)
-3. [Provider Inventory](./docs/nhn-cloud-terraform-provider-inventory.md)
+3. [공공기관 IaaS 3-tier 구축 가이드](./docs/nhn-cloud-public-iaas-3tier-build-guide.md)
+4. [클라우드 네이티브 구축 가이드](./docs/nhn-cloud-cloud-native-build-guide.md)
+5. [Provider Inventory](./docs/nhn-cloud-terraform-provider-inventory.md)
 
 ## 표준 아키텍처
 
-![NHN Cloud 표준 아키텍처](./docs/assets/nhn-cloud-standard-architecture.svg)
+![NHN Cloud 표준 아키텍처 비교도](./docs/assets/nhn-cloud-standard-architecture.svg)
 
-설계는 두 단계로 나뉩니다.
+설계는 두 가지 표준안으로 나뉩니다.
 
-| Stack | 경로 | 역할 |
+| 표준안 | 주요 구조 | Terraform 역할 |
 |---|---|---|
-| Cloud foundation | `infra/envs/dev` | VPC, subnet, routing table, security group, Object Storage, NKS |
-| Kubernetes platform | `infra/platform/dev` | namespace, StorageClass, cert-manager, Argo CD, CI/CD 확장 add-on |
+| 공공기관 IaaS 3-tier 전환 | Web/WAS/DB VM, 운영 솔루션 서버, LB, volume | VPC, subnet, security group, compute, LB, volume, Object Storage 표준화 |
+| 클라우드 네이티브 전환 | NKS, GitOps, CI/CD, Object Storage | VPC, NKS, Object Storage, namespace, StorageClass, Helm add-on 표준화 |
+
+현재 구현된 Terraform 코드는 클라우드 네이티브 전환안의 foundation/platform 골격이다. IaaS 3-tier 전환안은 provider 지원 범위와 설계 기준을 문서화했으며, 실제 코드 적용 시 compute, load balancer, block storage 모듈 확장이 필요하다.
 
 ## 콘솔에서 먼저 확인할 값
 
@@ -56,9 +64,11 @@ Terraform 실행 전에 아래 값이 필요합니다.
 | Internet Gateway ID | routing table attach |
 | Quota | NKS, LB, volume 생성 가능성 확인 |
 
-자세한 목록은 [구축 가이드](./docs/nhn-cloud-terraform-build-guide.md)의 “콘솔에서 미리 생성하거나 확인해야 하는 값”을 참고하세요.
+자세한 목록은 [구축 가이드](./docs/nhn-cloud-terraform-build-guide.md)의 공통 사전 준비와 전환 유형별 가이드를 참고하세요.
 
 ## 실행 순서
+
+현재 코드 기준 실행 순서는 클라우드 네이티브 전환안에 해당합니다.
 
 Cloud foundation:
 
