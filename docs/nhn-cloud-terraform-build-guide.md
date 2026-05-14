@@ -7,7 +7,7 @@
 
 | 전환 유형 | 대상 | 가이드 |
 |---|---|---|
-| 공공기관 IaaS 3-tier 전환 | 기존 VM/물리 업무시스템을 Web/WAS/DB와 운영 솔루션 서버 구조로 이전 | [공공기관 IaaS 3-tier 구축 가이드](./nhn-cloud-public-iaas-3tier-build-guide.md) |
+| IaaS 3-tier 전환 | 기존 VM/물리 업무시스템을 Web/WAS/DB와 운영 솔루션 서버 구조로 이전 | [IaaS 3-tier 구축 가이드](./nhn-cloud-iaas-3tier-build-guide.md) |
 | 클라우드 네이티브 전환 | NKS, GitOps, CI/CD, Object Storage 기반 컨테이너 플랫폼 구축 | [클라우드 네이티브 구축 가이드](./nhn-cloud-cloud-native-build-guide.md) |
 
 관련 문서:
@@ -15,12 +15,12 @@
 - [구축 범위](./nhn-cloud-terraform-scope.md)
 - [provider inventory](./nhn-cloud-terraform-provider-inventory.md)
 - [표준 아키텍처 비교도](./assets/nhn-cloud-standard-architecture.svg)
-- [공공기관 IaaS 3-tier 표준 아키텍처](./assets/nhn-cloud-public-iaas-3tier-architecture.svg)
+- [IaaS 3-tier 표준 아키텍처](./assets/nhn-cloud-iaas-3tier-architecture.svg)
 - [클라우드 네이티브 표준 아키텍처](./assets/nhn-cloud-cloud-native-architecture.svg)
 
 ## 1. 선택 기준
 
-| 구분 | 공공기관 IaaS 3-tier 전환 | 클라우드 네이티브 전환 |
+| 구분 | IaaS 3-tier 전환 | 클라우드 네이티브 전환 |
 |---|---|---|
 | 주 대상 | 기존 물리/VM 업무시스템 이전 | 애플리케이션 현대화, 컨테이너 전환 |
 | 런타임 | Compute Instance | NKS worker node |
@@ -52,7 +52,7 @@
 | DNS zone/record | 조건부 | 서비스 도메인 연결 |
 | TLS 인증서/Key Manager ref | 조건부 | HTTPS termination |
 | Remote state 저장소 | 조건부 | 협업과 운영 state 관리 |
-| 기관 보안 요구사항 | 예 | 망 분리, 접근 통제, 로그 보존, 백업 정책 확정 |
+| 보안 요구사항 | 예 | 망 분리, 접근 통제, 로그 보존, 백업 정책 확정 |
 
 민감값은 `terraform.tfvars`에 저장하지 않는다. 로컬 실행은 환경 변수 주입을 기본으로 한다.
 
@@ -69,7 +69,7 @@ export TF_VAR_nhncloud_region="KR1"
 ```text
 infra/
   envs/
-    public-iaas-dev/        # IaaS 3-tier foundation, compute, lb, storage
+    iaas-3tier-dev/         # IaaS 3-tier foundation, compute, lb, storage
     cloud-native-dev/       # VPC, subnet, security group, Object Storage, NKS
   platform/
     cloud-native-dev/       # NKS 내부 namespace, StorageClass, Helm add-on
@@ -90,7 +90,7 @@ infra/
 |---|---|---|
 | 클라우드 네이티브 foundation | `infra/envs/dev` | 구현됨 |
 | 클라우드 네이티브 platform | `infra/platform/dev` | 구현됨 |
-| IaaS 3-tier stack | `infra/envs/public-iaas-dev` 권장 | 추가 구현 필요 |
+| IaaS 3-tier stack | `infra/envs/iaas-3tier-dev` 권장 | 추가 구현 필요 |
 | compute/lb/block-storage 모듈 | `infra/modules/*` 권장 | 추가 구현 필요 |
 
 ## 4. 공통 검증 게이트
@@ -127,6 +127,6 @@ pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/envs/dev
 
 ## 5. 다음 문서
 
-IaaS 기반 전환이면 [공공기관 IaaS 3-tier 구축 가이드](./nhn-cloud-public-iaas-3tier-build-guide.md)를 따른다.
+IaaS 기반 전환이면 [IaaS 3-tier 구축 가이드](./nhn-cloud-iaas-3tier-build-guide.md)를 따른다.
 
 NKS 기반 전환이면 [클라우드 네이티브 구축 가이드](./nhn-cloud-cloud-native-build-guide.md)를 따른다.

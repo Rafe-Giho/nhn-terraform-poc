@@ -16,15 +16,15 @@
 | B | provider 코드에는 있지만 NHN Cloud 문서화가 약한 리소스 | dev smoke 검증 후 제한 적용 |
 | C | provider에도 없거나 NHN Cloud API/콘솔만 확인된 서비스 | Terraform 표준 범위 밖. 콘솔/API/별도 자동화 |
 
-전체 리소스 목록은 [provider inventory](./nhn-cloud-terraform-provider-inventory.md)에 분리했다. 실제 구축 절차는 [NHN Cloud Terraform 구축 가이드](./nhn-cloud-terraform-build-guide.md)를 진입점으로 삼고, [공공기관 IaaS 3-tier 구축 가이드](./nhn-cloud-public-iaas-3tier-build-guide.md)와 [클라우드 네이티브 구축 가이드](./nhn-cloud-cloud-native-build-guide.md)를 각각 따른다.
+전체 리소스 목록은 [provider inventory](./nhn-cloud-terraform-provider-inventory.md)에 분리했다. 실제 구축 절차는 [NHN Cloud Terraform 구축 가이드](./nhn-cloud-terraform-build-guide.md)를 진입점으로 삼고, [IaaS 3-tier 구축 가이드](./nhn-cloud-iaas-3tier-build-guide.md)와 [클라우드 네이티브 구축 가이드](./nhn-cloud-cloud-native-build-guide.md)를 각각 따른다.
 
 ## 표준 아키텍처
 
 ![NHN Cloud 표준 아키텍처 비교도](./assets/nhn-cloud-standard-architecture.svg)
 
-### 공공기관 IaaS 3-tier 전환
+### IaaS 3-tier 전환
 
-![공공기관 IaaS 3-tier 표준 아키텍처](./assets/nhn-cloud-public-iaas-3tier-architecture.svg)
+![IaaS 3-tier 표준 아키텍처](./assets/nhn-cloud-iaas-3tier-architecture.svg)
 
 이 구조는 기존 업무시스템을 Web/WAS/DB VM 계층으로 이전하는 전환 사업에 맞춘다. DMZ, Application, Data, Management/Operations subnet을 분리하고 모니터링, 로그, 백업, 보안 솔루션 서버를 운영망에 배치한다.
 
@@ -153,7 +153,7 @@ Terraform 밖 또는 선행 확정 범위:
 ```text
 infra/
   envs/
-    public-iaas-dev/  # 공공기관 IaaS 3-tier foundation
+    iaas-3tier-dev/   # IaaS 3-tier foundation
     cloud-native-dev/ # NKS foundation
     stage/
     prod/

@@ -9,7 +9,7 @@
 | Cloud foundation | `envs/dev` | VPC, subnet, security group, object storage, NKS |
 | Kubernetes platform | `platform/dev` | NKS 내부 namespace, StorageClass, Argo CD, cert-manager 등 |
 
-공공기관 IaaS 3-tier 전환안은 설계와 provider 범위가 문서화되어 있으며, 실제 코드 적용 시 `compute`, `load-balancer`, `block-storage` 모듈을 추가해 별도 stack으로 분리한다.
+IaaS 3-tier 전환안은 설계와 provider 범위가 문서화되어 있으며, 실제 코드 적용 시 `compute`, `load-balancer`, `block-storage` 모듈을 추가해 별도 stack으로 분리한다.
 
 ## 실행 순서
 

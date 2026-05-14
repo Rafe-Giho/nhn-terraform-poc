@@ -1,6 +1,6 @@
 # NHN Cloud Terraform PoC
 
-NHN Cloud에서 Terraform으로 생성/관리할 수 있는 리소스 범위를 분석하고, 공공기관 IaaS 3-tier 전환안과 클라우드 네이티브 전환안의 표준 아키텍처와 Terraform 프로젝트 골격을 정리한 저장소입니다.
+NHN Cloud에서 Terraform으로 생성/관리할 수 있는 리소스 범위를 분석하고, IaaS 3-tier 전환안과 클라우드 네이티브 전환안의 표준 아키텍처와 Terraform 프로젝트 골격을 정리한 저장소입니다.
 
 기준 provider:
 
@@ -14,11 +14,11 @@ docs/
   nhn-cloud-terraform-scope.md              # 구축 가능 범위와 표준 아키텍처
   nhn-cloud-terraform-provider-inventory.md # provider 전체 리소스/데이터소스 목록
   nhn-cloud-terraform-build-guide.md        # 구축 가이드 진입점
-  nhn-cloud-public-iaas-3tier-build-guide.md
+  nhn-cloud-iaas-3tier-build-guide.md
   nhn-cloud-cloud-native-build-guide.md
   assets/
     nhn-cloud-standard-architecture.svg     # 표준 아키텍처 비교도
-    nhn-cloud-public-iaas-3tier-architecture.svg
+    nhn-cloud-iaas-3tier-architecture.svg
     nhn-cloud-cloud-native-architecture.svg
 infra/
   envs/dev/                                 # NHN Cloud foundation stack
@@ -32,7 +32,7 @@ harness/
 
 1. [구축 범위와 표준 아키텍처](./docs/nhn-cloud-terraform-scope.md)
 2. [NHN Cloud Terraform 구축 가이드](./docs/nhn-cloud-terraform-build-guide.md)
-3. [공공기관 IaaS 3-tier 구축 가이드](./docs/nhn-cloud-public-iaas-3tier-build-guide.md)
+3. [IaaS 3-tier 구축 가이드](./docs/nhn-cloud-iaas-3tier-build-guide.md)
 4. [클라우드 네이티브 구축 가이드](./docs/nhn-cloud-cloud-native-build-guide.md)
 5. [Provider Inventory](./docs/nhn-cloud-terraform-provider-inventory.md)
 
@@ -44,7 +44,7 @@ harness/
 
 | 표준안 | 주요 구조 | Terraform 역할 |
 |---|---|---|
-| 공공기관 IaaS 3-tier 전환 | Web/WAS/DB VM, 운영 솔루션 서버, LB, volume | VPC, subnet, security group, compute, LB, volume, Object Storage 표준화 |
+| IaaS 3-tier 전환 | Web/WAS/DB VM, 운영 솔루션 서버, LB, volume | VPC, subnet, security group, compute, LB, volume, Object Storage 표준화 |
 | 클라우드 네이티브 전환 | NKS, GitOps, CI/CD, Object Storage | VPC, NKS, Object Storage, namespace, StorageClass, Helm add-on 표준화 |
 
 현재 구현된 Terraform 코드는 클라우드 네이티브 전환안의 foundation/platform 골격이다. IaaS 3-tier 전환안은 provider 지원 범위와 설계 기준을 문서화했으며, 실제 코드 적용 시 compute, load balancer, block storage 모듈 확장이 필요하다.

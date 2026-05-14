@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
-  <title id="title">NHN Cloud 공공기관 IaaS 3-tier 표준 아키텍처</title>
-  <desc id="desc">VM 기반 Web, WAS, DB 3-tier와 모니터링, 로그, 백업, 보안 솔루션 서버를 포함한 공공기관 전환형 표준 아키텍처</desc>
+  <title id="title">NHN Cloud IaaS 3-tier 표준 아키텍처</title>
+  <desc id="desc">VM 기반 Web, WAS, DB 3-tier와 모니터링, 로그, 백업, 보안 솔루션 서버를 포함한 전환형 표준 아키텍처</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L0,6 L9,3 z" fill="#25384f"/>
@@ -27,11 +27,11 @@
   </defs>
 
   <rect class="bg" width="1600" height="980"/>
-  <text class="title" x="42" y="48">NHN Cloud 공공기관 IaaS 3-tier 표준 아키텍처</text>
+  <text class="title" x="42" y="48">NHN Cloud IaaS 3-tier 표준 아키텍처</text>
   <text class="subtitle" x="42" y="73">기존 업무시스템을 VM 기반 3-tier로 전환하고, 관리망에 운영 솔루션 서버를 분리 배치한다.</text>
 
   <rect class="external" x="42" y="110" width="250" height="250" rx="12"/>
-  <text class="section" x="68" y="142">External / 기관망</text>
+  <text class="section" x="68" y="142">External / 고객망</text>
   <rect class="box" x="78" y="170" width="176" height="38" rx="7"/>
   <text class="label" x="126" y="194">Users</text>
   <rect class="box" x="78" y="225" width="176" height="38" rx="7"/>
@@ -47,7 +47,7 @@
   <text class="label" x="115" y="539">접근통제</text>
   <rect class="manual" x="78" y="570" width="176" height="38" rx="7"/>
   <text class="label" x="112" y="594">보안관제 연동</text>
-  <text class="tiny" x="78" y="650">기관 보안 기준에 따라</text>
+  <text class="tiny" x="78" y="650">보안 기준에 따라</text>
   <text class="tiny" x="78" y="670">망 연계, 접속 승인, 감사</text>
   <text class="tiny" x="78" y="690">로그 보존 정책을 확정</text>
 

@@ -99,7 +99,7 @@ terraform -chdir=infra/envs/dev apply tfplan
 
 적용 전 확인:
 
-- VPC CIDR이 기존 기관망, VPN, 전용회선 대역과 겹치지 않는지 확인
+- VPC CIDR이 기존 네트워크, VPN, 전용회선 대역과 겹치지 않는지 확인
 - `internet_gateway_id`가 해당 프로젝트/리전에 존재하는지 확인
 - `nks_subnet_key`가 실제 생성되는 subnet key와 일치하는지 확인
 - NKS version/addon version이 리전에서 지원되는지 확인
