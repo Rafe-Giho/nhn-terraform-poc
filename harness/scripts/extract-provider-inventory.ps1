@@ -61,9 +61,9 @@ $content = New-Object System.Collections.Generic.List[string]
 $content.Add("# NHN Cloud Provider Inventory")
 $content.Add("")
 if ($SourceRef) {
-  $content.Add("Generated from ``$providerFile`` at ``$SourceRef``.")
+  $content.Add("Generated from ``$($providerFile -replace '\\', '/')`` at ``$SourceRef``.")
 } else {
-  $content.Add("Generated from ``$providerFile``.")
+  $content.Add("Generated from ``$($providerFile -replace '\\', '/')``.")
 }
 $content.Add("")
 $content.Add("이 문서는 provider의 ``ResourcesMap``과 ``DataSourcesMap``에 등록된 전체 목록이다. Resource type이 등록되어 있다는 뜻이지, NHN Cloud 운영 환경에서 모두 동일하게 권장된다는 뜻은 아니다.")

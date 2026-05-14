@@ -62,8 +62,8 @@ Terraform 실행 전에 아래 값이 필요합니다.
 
 Cloud foundation:
 
-```powershell
-Copy-Item .\infra\envs\dev\terraform.tfvars.example .\infra\envs\dev\terraform.tfvars
+```bash
+cp ./infra/envs/dev/terraform.tfvars.example ./infra/envs/dev/terraform.tfvars
 
 terraform -chdir=infra/envs/dev init -backend=false
 terraform -chdir=infra/envs/dev plan
@@ -71,8 +71,8 @@ terraform -chdir=infra/envs/dev plan
 
 NKS 생성 후 Kubernetes platform:
 
-```powershell
-Copy-Item .\infra\platform\dev\terraform.tfvars.example .\infra\platform\dev\terraform.tfvars
+```bash
+cp ./infra/platform/dev/terraform.tfvars.example ./infra/platform/dev/terraform.tfvars
 
 terraform -chdir=infra/platform/dev init
 terraform -chdir=infra/platform/dev plan
@@ -84,20 +84,20 @@ terraform -chdir=infra/platform/dev plan
 
 Provider schema 검증:
 
-```powershell
-.\harness\scripts\verify-registry-schema.ps1 -ProviderVersion 1.0.8
+```bash
+pwsh ./harness/scripts/verify-registry-schema.ps1 -ProviderVersion 1.0.8
 ```
 
 정적 검증:
 
-```powershell
-.\harness\scripts\static-check.ps1 -TerraformRoot .\infra\envs\dev
+```bash
+pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/envs/dev
 ```
 
 Plan JSON 생성:
 
-```powershell
-.\harness\scripts\plan-json.ps1 -TerraformRoot .\infra\envs\dev
+```bash
+pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/envs/dev
 ```
 
 ## 운영 주의사항
@@ -107,4 +107,3 @@ Plan JSON 생성:
 - NKS cluster label, addon, node image, subnet, keypair 변경은 재생성 위험이 있습니다.
 - Kubernetes Secret, CI token, registry password 같은 민감값은 Terraform state에 남기지 않습니다.
 - provider code에는 있지만 문서화가 약한 리소스는 dev smoke 검증 후 운영 편입합니다.
-

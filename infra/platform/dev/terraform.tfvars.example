@@ -1,7 +1,7 @@
 # Copy this file to terraform.tfvars and fill real values.
 # Do not commit terraform.tfvars.
 
-kubeconfig_path    = "C:/Users/user/Downloads/ta-sgh-vxlan-istio-ambient-cls_kubeconfig.yaml"
+kubeconfig_path    = "/home/user/Downloads/ta-sgh-vxlan-istio-ambient-cls_kubeconfig.yaml"
 kubeconfig_context = "nks_ta-sgh-vxlan-istio-ambient-cls_2fefc532-2057-48b8-8ab3-b67e82640ff5"
 
 project_prefix = "sgh"
@@ -27,4 +27,3 @@ extra_helm_releases = {
   #   ]
   # }
 }
-

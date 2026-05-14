@@ -1,6 +1,6 @@
 # NHN Cloud Provider Inventory
 
-Generated from `.\.provider-src\nhncloud\provider.go` at `v1.0.8 / 14725d0`.
+Generated from `./.provider-src/nhncloud/provider.go` at `v1.0.8 / 14725d0`.
 
 이 문서는 provider의 `ResourcesMap`과 `DataSourcesMap`에 등록된 전체 목록이다. Resource type이 등록되어 있다는 뜻이지, NHN Cloud 운영 환경에서 모두 동일하게 권장된다는 뜻은 아니다.
 
