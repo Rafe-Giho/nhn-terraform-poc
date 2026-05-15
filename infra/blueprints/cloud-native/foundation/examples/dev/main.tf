@@ -7,10 +7,33 @@ locals {
     managed_by  = "terraform"
   }
 
+  devops_enabled_servers = {
+    for key, server in var.devops_servers : key => server
+    if try(server.enabled, true)
+  }
+
+  devops_service_ports = distinct(flatten([
+    for server in values(local.devops_enabled_servers) : try(server.ingress_ports, [])
+  ]))
+
   security_groups = {
     public_entrypoint = {
-      name = "${local.name_prefix}-public-entrypoint-sg"
+      name        = "${local.name_prefix}-public-entrypoint-sg"
+      description = "Public entrypoint security group for external HTTP/HTTPS traffic."
       rules = concat(
+        flatten([
+          for port in var.entrypoint_backend_ports : [
+            {
+              direction        = "egress"
+              ethertype        = "IPv4"
+              protocol         = "tcp"
+              port_range_min   = port
+              port_range_max   = port
+              remote_ip_prefix = var.vpc_cidr
+              description      = "entrypoint to private service port ${port}"
+            }
+          ]
+        ]),
         [
           for cidr in var.public_ingress_cidrs : {
             direction        = "ingress"
@@ -32,23 +55,86 @@ locals {
             remote_ip_prefix = cidr
             description      = "public https"
           }
-        ]
+        ],
+        try(var.extra_security_group_rules["public_entrypoint"], [])
       )
     }
 
     platform_admin = {
-      name = "${local.name_prefix}-platform-admin-sg"
-      rules = [
-        for cidr in var.management_cidrs : {
-          direction        = "ingress"
-          ethertype        = "IPv4"
-          protocol         = "tcp"
-          port_range_min   = 22
-          port_range_max   = 22
-          remote_ip_prefix = cidr
-          description      = "ssh from management cidr"
-        }
-      ]
+      name        = "${local.name_prefix}-platform-admin-sg"
+      description = "Platform administration security group. Admin ingress is restricted to approved CIDRs."
+      rules = concat(
+        flatten([
+          for port in var.platform_admin_egress_ports : [
+            {
+              direction        = "egress"
+              ethertype        = "IPv4"
+              protocol         = "tcp"
+              port_range_min   = port
+              port_range_max   = port
+              remote_ip_prefix = var.vpc_cidr
+              description      = "platform admin to vpc port ${port}"
+            }
+          ]
+        ]),
+        [
+          for cidr in var.management_cidrs : {
+            direction        = "ingress"
+            ethertype        = "IPv4"
+            protocol         = "tcp"
+            port_range_min   = 22
+            port_range_max   = 22
+            remote_ip_prefix = cidr
+            description      = "ssh from management cidr"
+          }
+        ],
+        try(var.extra_security_group_rules["platform_admin"], [])
+      )
+    }
+
+    devops_tools = {
+      name        = "${local.name_prefix}-devops-tools-sg"
+      description = "DevOps integration server security group for GitLab/Gitea/Jenkins VM hosts."
+      rules = concat(
+        flatten([
+          for port in var.devops_internal_egress_ports : [
+            {
+              direction        = "egress"
+              ethertype        = "IPv4"
+              protocol         = "tcp"
+              port_range_min   = port
+              port_range_max   = port
+              remote_ip_prefix = var.vpc_cidr
+              description      = "devops to vpc port ${port}"
+            }
+          ]
+        ]),
+        [
+          for cidr in var.management_cidrs : {
+            direction        = "ingress"
+            ethertype        = "IPv4"
+            protocol         = "tcp"
+            port_range_min   = 22
+            port_range_max   = 22
+            remote_ip_prefix = cidr
+            description      = "ssh from management cidr"
+          }
+        ],
+        flatten([
+          for port in local.devops_service_ports : [
+            for cidr in var.devops_access_cidrs : {
+              direction        = "ingress"
+              ethertype        = "IPv4"
+              protocol         = "tcp"
+              port_range_min   = port
+              port_range_max   = port
+              remote_ip_prefix = cidr
+              description      = "devops service port ${port}"
+            }
+          ]
+        ]),
+        try(var.extra_security_group_rules["devops_tools"], [])
+      )
     }
   }
 
@@ -77,10 +163,17 @@ locals {
 module "network" {
   source = "../../../../../modules/network"
 
-  name_prefix         = local.name_prefix
-  vpc_cidr            = var.vpc_cidr
-  subnets             = var.subnets
-  internet_gateway_id = var.internet_gateway_id
+  name_prefix = local.name_prefix
+  vpc_cidr    = var.vpc_cidr
+  routing_tables = {
+    public = {
+      internet_gateway_id = var.public_internet_gateway_id
+    }
+    private    = {}
+    management = {}
+  }
+  default_routing_table_key = "private"
+  subnets                   = var.subnets
 }
 
 module "security" {
@@ -95,6 +188,50 @@ module "object_storage" {
   name_prefix = local.name_prefix
   containers  = var.object_storage_containers
   metadata    = local.common_metadata
+}
+
+module "devops_compute" {
+  source = "../../../../../modules/compute"
+
+  instances = {
+    for key, server in local.devops_enabled_servers : key => {
+      name                       = coalesce(try(server.name, null), "${local.name_prefix}-${key}")
+      flavor_id                  = server.flavor_id
+      key_pair                   = coalesce(try(server.key_pair, null), var.nks_keypair_name)
+      availability_zone          = try(server.availability_zone, null)
+      network_id                 = module.network.vpc_id
+      subnet_id                  = module.network.subnet_ids[coalesce(try(server.subnet_key, null), "devops")]
+      fixed_ip_v4                = try(server.fixed_ip_v4, null)
+      security_groups            = [module.security.security_group_names["devops_tools"]]
+      boot_image_id              = server.image_id
+      boot_volume_size           = try(server.boot_volume_size, 80)
+      boot_delete_on_termination = try(server.boot_delete_on_termination, false)
+    }
+  }
+}
+
+module "devops_block_storage" {
+  source = "../../../../../modules/block-storage"
+
+  volumes = {
+    for key, server in local.devops_enabled_servers : key => {
+      name              = format("%s-data", coalesce(try(server.name, null), format("%s-%s", local.name_prefix, key)))
+      size              = try(server.data_volume_size, 0)
+      availability_zone = try(server.availability_zone, null)
+      volume_type       = try(server.data_volume_type, "General HDD")
+      description       = "Data volume for ${try(server.role, key)} DevOps integration server"
+    }
+    if try(server.data_volume_size, 0) > 0
+  }
+
+  instance_ids = module.devops_compute.instance_ids
+  attachments = {
+    for key, server in local.devops_enabled_servers : key => {
+      volume_key   = key
+      instance_key = key
+    }
+    if try(server.data_volume_size, 0) > 0
+  }
 }
 
 module "nks" {

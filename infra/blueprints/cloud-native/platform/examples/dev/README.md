@@ -1,6 +1,6 @@
 # Cloud-native Platform Dev Blueprint
 
-이 blueprint는 NKS 내부 namespace, StorageClass, cert-manager, Argo CD를 구성하는 platform 예시다.
+이 blueprint는 NKS 내부 namespace, StorageClass, cert-manager, Argo CD, CI runner/agent 확장 지점을 구성하는 platform 예시다.
 
 ```bash
 cp ./infra/blueprints/cloud-native/platform/examples/dev/terraform.tfvars.example ./infra/blueprints/cloud-native/platform/examples/dev/terraform.tfvars

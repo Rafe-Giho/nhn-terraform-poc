@@ -14,27 +14,36 @@ vpc_cidr = "10.20.0.0/16"
 
 subnets = {
   dmz = {
-    cidr = "10.20.10.0/24"
+    cidr              = "10.20.10.0/24"
+    routing_table_key = "public"
+  }
+  web = {
+    cidr              = "10.20.20.0/24"
+    routing_table_key = "private"
   }
   app = {
-    cidr = "10.20.20.0/24"
+    cidr              = "10.20.30.0/24"
+    routing_table_key = "private"
   }
   data = {
-    cidr = "10.20.30.0/24"
+    cidr              = "10.20.40.0/24"
+    routing_table_key = "private"
   }
   management = {
-    cidr = "10.20.40.0/24"
+    cidr              = "10.20.50.0/24"
+    routing_table_key = "management"
   }
   operations = {
-    cidr = "10.20.50.0/24"
+    cidr              = "10.20.60.0/24"
+    routing_table_key = "management"
   }
 }
 
 # Console-precreated or console-checked values.
-internet_gateway_id = "replace-with-internet-gateway-id"
-keypair_name        = "replace-with-keypair-name"
-image_id            = "replace-with-server-image-uuid"
-availability_zone   = "kr-pub-a"
+public_internet_gateway_id = "replace-with-internet-gateway-id"
+keypair_name               = "replace-with-keypair-name"
+image_id                   = "replace-with-server-image-uuid"
+availability_zone          = "kr-pub-a"
 
 flavor_ids = {
   web = "replace-with-web-flavor-uuid"
@@ -44,6 +53,23 @@ flavor_ids = {
 }
 
 management_cidrs = ["203.0.113.10/32"]
+
+management_egress_ports  = [22]
+operations_polling_ports = [9100]
+
+# Add temporary/project-specific SG exceptions only after design review.
+# extra_security_group_rules = {
+#   web = [
+#     {
+#       direction        = "egress"
+#       protocol         = "tcp"
+#       port_range_min   = 443
+#       port_range_max   = 443
+#       remote_ip_prefix = "replace-with-proxy-or-service-gateway-cidr"
+#       description      = "temporary package repository access"
+#     }
+#   ]
+# }
 
 web_count = 2
 was_count = 2

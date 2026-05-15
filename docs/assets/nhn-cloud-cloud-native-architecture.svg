@@ -49,13 +49,15 @@
   <text class="small" x="82" y="580">External network/subnet</text>
   <text class="small" x="82" y="605">DNS, TLS, quota</text>
   <text class="small" x="82" y="630">Registry credential</text>
-  <text class="small" x="82" y="655">Observability policy</text>
+  <text class="small" x="82" y="655">DevOps image/flavor</text>
+  <text class="small" x="82" y="680">NACL, Flow Log</text>
+  <text class="small" x="82" y="705">NAT, Service Gateway</text>
 
   <rect class="project" x="345" y="110" width="1210" height="760" rx="14"/>
-  <text class="section" x="375" y="142">NHN Cloud Project / VPC</text>
+  <text class="section" x="375" y="142">NHN Cloud Project / VPC - public/private/management routing table</text>
 
   <rect class="entry" x="385" y="175" width="1130" height="125" rx="11"/>
-  <text class="section" x="415" y="207">Public Entry</text>
+  <text class="section" x="415" y="207">Public Entry / Ingress Subnet - public routing table</text>
   <rect class="box" x="430" y="235" width="160" height="42" rx="8"/>
   <text class="label" x="477" y="261">DNS</text>
   <rect class="box" x="635" y="235" width="175" height="42" rx="8"/>
@@ -68,7 +70,7 @@
   <text class="label" x="1360" y="261">WAF option</text>
 
   <rect class="platform" x="385" y="335" width="1130" height="235" rx="11"/>
-  <text class="section" x="415" y="367">Private NKS Service Platform</text>
+  <text class="section" x="415" y="367">Private NKS Service Platform - private routing table</text>
   <rect class="box" x="430" y="395" width="185" height="58" rx="8"/>
   <text class="label" x="483" y="420">NKS Cluster</text>
   <text class="tiny" x="468" y="440">Calico, CoreDNS, CSI</text>
@@ -94,19 +96,19 @@
   <text class="label" x="1267" y="516">NetworkPolicy</text>
 
   <rect class="cicd" x="385" y="605" width="640" height="170" rx="11"/>
-  <text class="section" x="415" y="637">Kubernetes Platform / CI/CD</text>
-  <rect class="box" x="430" y="665" width="135" height="42" rx="8"/>
-  <text class="label" x="466" y="691">Argo CD</text>
-  <rect class="box" x="600" y="665" width="145" height="42" rx="8"/>
-  <text class="label" x="637" y="691">CI Runner</text>
-  <rect class="box" x="780" y="665" width="150" height="42" rx="8"/>
-  <text class="label" x="812" y="691">cert-manager</text>
-  <rect class="box" x="430" y="720" width="135" height="34" rx="8"/>
-  <text class="label" x="455" y="742">Monitoring</text>
-  <rect class="box" x="600" y="720" width="145" height="34" rx="8"/>
-  <text class="label" x="648" y="742">Logging</text>
-  <rect class="box" x="780" y="720" width="150" height="34" rx="8"/>
-  <text class="label" x="810" y="742">Policy option</text>
+  <text class="section" x="415" y="637">DevOps Integration / CI/CD - management routing table</text>
+  <rect class="box" x="430" y="665" width="155" height="42" rx="8"/>
+  <text class="label" x="462" y="691">GitLab/Gitea</text>
+  <rect class="box" x="620" y="665" width="145" height="42" rx="8"/>
+  <text class="label" x="654" y="691">Jenkins</text>
+  <rect class="box" x="800" y="665" width="150" height="42" rx="8"/>
+  <text class="label" x="836" y="691">Argo CD</text>
+  <rect class="box" x="430" y="720" width="155" height="34" rx="8"/>
+  <text class="label" x="457" y="742">CI Runner/Agent</text>
+  <rect class="box" x="620" y="720" width="145" height="34" rx="8"/>
+  <text class="label" x="650" y="742">cert-manager</text>
+  <rect class="box" x="800" y="720" width="150" height="34" rx="8"/>
+  <text class="label" x="828" y="742">Observability</text>
 
   <rect class="storage" x="1065" y="605" width="450" height="170" rx="11"/>
   <text class="section" x="1095" y="637">Storage / Data Services</text>
@@ -121,7 +123,7 @@
 
   <rect class="external" x="345" y="885" width="1170" height="55" rx="10"/>
   <text class="section" x="375" y="909">Terraform Stack Boundary</text>
-  <text class="small" x="375" y="929">foundation: VPC, subnet, security group, Object Storage, NKS / platform: namespace, StorageClass, Helm add-on / workload: GitOps manifest</text>
+  <text class="small" x="375" y="929">foundation: VPC, routing tables, subnet mapping, explicit SG ingress/egress, Object Storage, DevOps VM, NKS / platform: namespace, StorageClass, Helm add-on</text>
 
   <path class="line" d="M262 244 C335 244, 355 256, 430 256"/>
   <path class="line" d="M590 256 L635 256"/>
@@ -131,9 +133,9 @@
   <path class="line" d="M1185 277 C1185 335, 990 342, 990 395"/>
   <path class="line" d="M1185 277 C1185 335, 1310 350, 1225 395"/>
   <path class="dash" d="M262 299 C340 299, 360 686, 430 686"/>
-  <path class="line" d="M565 686 L600 686"/>
-  <path class="line" d="M745 686 L780 686"/>
-  <path class="dash" d="M930 686 C1000 686, 1030 686, 1105 686"/>
+  <path class="line" d="M585 686 L620 686"/>
+  <path class="line" d="M765 686 L800 686"/>
+  <path class="dash" d="M950 686 C1000 686, 1030 686, 1105 686"/>
   <path class="dash" d="M905 532 C925 575, 1185 620, 1185 665"/>
   <path class="dash" d="M1110 532 C1150 575, 1372 620, 1372 720"/>
   <path class="dash" d="M262 354 C350 354, 375 515, 430 511"/>

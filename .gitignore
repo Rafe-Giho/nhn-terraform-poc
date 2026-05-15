@@ -19,6 +19,9 @@ tfplan
 tfplan.json
 harness/out/
 
+# Generated project workspaces
+/projects/
+
 # Local override files
 override.tf
 override.tf.json

@@ -11,7 +11,7 @@
   - 문서화되지 않은 OpenStack 계열 리소스: provider에는 있으나 NHN Cloud 실사용은 검증 필요
 - `terraform apply`, `terraform destroy`, 실제 클라우드 리소스 생성/삭제/변경은 사용자 승인 없이 실행하지 않는다.
 - 자격 증명, `*.tfvars`, state, plan JSON, provider schema 출력물은 커밋하지 않는다.
-- provider 버전과 리소스 목록을 갱신할 때는 `harness/scripts/extract-provider-inventory.ps1`로 인벤토리를 재생성하거나 동일 기준으로 수동 갱신한다.
+- provider 버전과 리소스 목록을 갱신할 때는 `harness/scripts/extract-provider-inventory.sh`로 인벤토리를 재생성하거나 동일 기준으로 수동 갱신한다.
 
 ## 하네스 운영 규칙
 

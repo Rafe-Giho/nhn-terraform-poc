@@ -48,29 +48,39 @@ variable "vpc_cidr" {
 variable "subnets" {
   description = "3-tier VPC subnet map."
   type = map(object({
-    cidr = string
+    cidr              = string
+    routing_table_key = optional(string)
   }))
   default = {
     dmz = {
-      cidr = "10.20.10.0/24"
+      cidr              = "10.20.10.0/24"
+      routing_table_key = "public"
+    }
+    web = {
+      cidr              = "10.20.20.0/24"
+      routing_table_key = "private"
     }
     app = {
-      cidr = "10.20.20.0/24"
+      cidr              = "10.20.30.0/24"
+      routing_table_key = "private"
     }
     data = {
-      cidr = "10.20.30.0/24"
+      cidr              = "10.20.40.0/24"
+      routing_table_key = "private"
     }
     management = {
-      cidr = "10.20.40.0/24"
+      cidr              = "10.20.50.0/24"
+      routing_table_key = "management"
     }
     operations = {
-      cidr = "10.20.50.0/24"
+      cidr              = "10.20.60.0/24"
+      routing_table_key = "management"
     }
   }
 }
 
-variable "internet_gateway_id" {
-  description = "Existing Internet Gateway ID to attach to the routing table."
+variable "public_internet_gateway_id" {
+  description = "Existing Internet Gateway ID to attach only to the public routing table."
   type        = string
   default     = null
 }
@@ -165,6 +175,33 @@ variable "log_ingress_port" {
   description = "Operations log collector ingress port."
   type        = number
   default     = 514
+}
+
+variable "management_egress_ports" {
+  description = "TCP ports that bastion/management hosts can reach inside the VPC."
+  type        = list(number)
+  default     = [22]
+}
+
+variable "operations_polling_ports" {
+  description = "TCP agent ports that operations servers can poll inside the VPC."
+  type        = list(number)
+  default     = [9100]
+}
+
+variable "extra_security_group_rules" {
+  description = "Project-specific additional security group rules by standard group key. Use only after design review."
+  type = map(list(object({
+    direction        = string
+    ethertype        = optional(string, "IPv4")
+    protocol         = optional(string)
+    port_range_min   = optional(number)
+    port_range_max   = optional(number)
+    remote_ip_prefix = optional(string)
+    remote_group_id  = optional(string)
+    description      = optional(string)
+  })))
+  default = {}
 }
 
 variable "operations_servers" {

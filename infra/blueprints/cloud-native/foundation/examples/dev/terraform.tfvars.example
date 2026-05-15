@@ -13,26 +13,88 @@ environment    = "cloud-native-dev"
 vpc_cidr = "10.10.0.0/16"
 
 subnets = {
-  app-a = {
-    cidr = "10.10.10.0/24"
+  ingress = {
+    cidr              = "10.10.10.0/24"
+    routing_table_key = "public"
   }
-  app-b = {
-    cidr = "10.10.20.0/24"
+  nks-a = {
+    cidr              = "10.10.20.0/24"
+    routing_table_key = "private"
+  }
+  nks-b = {
+    cidr              = "10.10.30.0/24"
+    routing_table_key = "private"
+  }
+  devops = {
+    cidr              = "10.10.40.0/24"
+    routing_table_key = "management"
+  }
+  management = {
+    cidr              = "10.10.50.0/24"
+    routing_table_key = "management"
   }
 }
 
 # Console-precreated or console-checked values.
-internet_gateway_id          = "replace-with-internet-gateway-id"
-nks_node_flavor_id           = "replace-with-flavor-uuid"
-nks_keypair_name             = "replace-with-keypair-name"
-nks_node_image_id            = "replace-with-nks-node-image-uuid"
-nks_external_network_id      = "replace-with-external-network-id"
-nks_external_subnet_id_list  = "replace-with-external-subnet-id"
-nks_kubernetes_version       = "v1.33.4"
-nks_calico_version           = "v3.30.2-nks1"
-nks_coredns_version          = "1.8.4-nks1"
+public_internet_gateway_id  = "replace-with-internet-gateway-id"
+nks_node_flavor_id          = "replace-with-flavor-uuid"
+nks_keypair_name            = "replace-with-keypair-name"
+nks_node_image_id           = "replace-with-nks-node-image-uuid"
+nks_external_network_id     = "replace-with-external-network-id"
+nks_external_subnet_id_list = "replace-with-external-subnet-id"
+nks_kubernetes_version      = "v1.33.4"
+nks_calico_version          = "v3.30.2-nks1"
+nks_coredns_version         = "1.8.4-nks1"
 
 management_cidrs = ["203.0.113.10/32"]
+
+entrypoint_backend_ports      = [80, 443]
+platform_admin_egress_ports   = [22, 443, 6443]
+devops_internal_egress_ports  = [22, 80, 443, 6443, 50000]
+
+# Optional VM-based DevOps integration servers.
+# Use either GitLab or Gitea as the Git repository standard, then add Jenkins
+# if the project needs a dedicated CI controller outside NKS.
+devops_access_cidrs = ["203.0.113.10/32"]
+
+# Add temporary/project-specific SG exceptions only after design review.
+# extra_security_group_rules = {
+#   devops_tools = [
+#     {
+#       direction        = "egress"
+#       protocol         = "tcp"
+#       port_range_min   = 443
+#       port_range_max   = 443
+#       remote_ip_prefix = "replace-with-nat-proxy-or-service-gateway-cidr"
+#       description      = "devops package and registry access"
+#     }
+#   ]
+# }
+
+# devops_servers = {
+#   gitea = {
+#     name             = "sgh-cloud-native-dev-gitea"
+#     role             = "gitea"
+#     subnet_key       = "devops"
+#     flavor_id        = "replace-with-flavor-uuid"
+#     image_id         = "replace-with-linux-image-uuid"
+#     key_pair         = "replace-with-keypair-name"
+#     ingress_ports    = [80, 443, 3000, 2222]
+#     boot_volume_size = 80
+#     data_volume_size = 200
+#   }
+#   jenkins = {
+#     name             = "sgh-cloud-native-dev-jenkins"
+#     role             = "jenkins"
+#     subnet_key       = "devops"
+#     flavor_id        = "replace-with-flavor-uuid"
+#     image_id         = "replace-with-linux-image-uuid"
+#     key_pair         = "replace-with-keypair-name"
+#     ingress_ports    = [80, 443, 8080, 50000]
+#     boot_volume_size = 80
+#     data_volume_size = 200
+#   }
+# }
 
 object_storage_containers = {
   artifacts = {
