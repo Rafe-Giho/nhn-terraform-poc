@@ -1,11 +1,12 @@
 # NHN Cloud 클라우드 네이티브 구축 가이드
 
-기준 provider: `nhn-cloud/nhncloud` `= 1.0.8`  
+기준 provider: `nhn-cloud/nhncloud` `= 1.0.8`
+
 대상: NKS, GitOps, CI/CD, Object Storage 기반 컨테이너 플랫폼
 
 아키텍처:
 
-![클라우드 네이티브 표준 아키텍처](./assets/nhn-cloud-cloud-native-architecture.svg)
+![클라우드 네이티브 표준 아키텍처](../assets/nhn-cloud-cloud-native-architecture.svg)
 
 ## 1. 적용 범위
 
@@ -15,8 +16,8 @@
 
 | Stack | 경로 | 역할 |
 |---|---|---|
-| Cloud foundation | `infra/envs/dev` | VPC, subnet, routing table, security group, Object Storage, NKS |
-| Kubernetes platform | `infra/platform/dev` | namespace, StorageClass, cert-manager, Argo CD, CI/CD 확장 add-on |
+| Cloud foundation | `infra/blueprints/cloud-native/foundation/examples/dev` | VPC, subnet, routing table, security group, Object Storage, NKS |
+| Kubernetes platform | `infra/blueprints/cloud-native/platform/examples/dev` | namespace, StorageClass, cert-manager, Argo CD, CI/CD 확장 add-on |
 
 ## 2. 콘솔 선행 확인 값
 
@@ -38,7 +39,7 @@
 
 ## 3. Terraform 생성/관리 범위
 
-`infra/envs/dev`에서 생성한다.
+`infra/blueprints/cloud-native/foundation/examples/dev`에서 생성한다.
 
 | 영역 | 리소스 |
 |---|---|
@@ -48,7 +49,7 @@
 | Object Storage | `nhncloud_objectstorage_container_v1` |
 | NKS | `nhncloud_kubernetes_cluster_v1`, `nhncloud_kubernetes_nodegroup_v1` |
 
-`infra/platform/dev`에서 생성한다.
+`infra/blueprints/cloud-native/platform/examples/dev`에서 생성한다.
 
 | 영역 | 리소스 |
 |---|---|
@@ -68,7 +69,7 @@ CI runner, Ingress controller, monitoring, logging, External Secrets, policy con
 `terraform.tfvars` 예시 파일을 복사한다.
 
 ```bash
-cp ./infra/envs/dev/terraform.tfvars.example ./infra/envs/dev/terraform.tfvars
+cp ./infra/blueprints/cloud-native/foundation/examples/dev/terraform.tfvars.example ./infra/blueprints/cloud-native/foundation/examples/dev/terraform.tfvars
 ```
 
 민감값은 환경 변수로 주입한다.
@@ -84,17 +85,17 @@ export TF_VAR_nhncloud_region="KR1"
 초기화와 검증:
 
 ```bash
-terraform -chdir=infra/envs/dev init -backend=false
-terraform -chdir=infra/envs/dev fmt -recursive
-terraform -chdir=infra/envs/dev validate
-terraform -chdir=infra/envs/dev plan -out=tfplan
-terraform -chdir=infra/envs/dev show -json tfplan > ../../../harness/out/dev-foundation-plan.json
+terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev init -backend=false
+terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev fmt -recursive
+terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev validate
+terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev plan -out=tfplan
+terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev show -json tfplan > ./harness/out/cloud-native-dev-foundation-plan.json
 ```
 
 적용은 plan 검토와 승인 후 실행한다.
 
 ```bash
-terraform -chdir=infra/envs/dev apply tfplan
+terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev apply tfplan
 ```
 
 적용 전 확인:
@@ -110,7 +111,7 @@ terraform -chdir=infra/envs/dev apply tfplan
 NKS 생성 후 NHN Cloud 콘솔에서 kubeconfig를 발급받는다.
 
 ```bash
-cp ./infra/platform/dev/terraform.tfvars.example ./infra/platform/dev/terraform.tfvars
+cp ./infra/blueprints/cloud-native/platform/examples/dev/terraform.tfvars.example ./infra/blueprints/cloud-native/platform/examples/dev/terraform.tfvars
 ```
 
 `kubeconfig_path`, `kubeconfig_context`를 실제 값으로 수정한다.
@@ -118,16 +119,16 @@ cp ./infra/platform/dev/terraform.tfvars.example ./infra/platform/dev/terraform.
 초기화와 계획 확인:
 
 ```bash
-terraform -chdir=infra/platform/dev init
-terraform -chdir=infra/platform/dev fmt -recursive
-terraform -chdir=infra/platform/dev validate
-terraform -chdir=infra/platform/dev plan -out=tfplan
+terraform -chdir=infra/blueprints/cloud-native/platform/examples/dev init
+terraform -chdir=infra/blueprints/cloud-native/platform/examples/dev fmt -recursive
+terraform -chdir=infra/blueprints/cloud-native/platform/examples/dev validate
+terraform -chdir=infra/blueprints/cloud-native/platform/examples/dev plan -out=tfplan
 ```
 
 적용은 plan 검토와 승인 후 실행한다.
 
 ```bash
-terraform -chdir=infra/platform/dev apply tfplan
+terraform -chdir=infra/blueprints/cloud-native/platform/examples/dev apply tfplan
 ```
 
 기본 생성:
@@ -198,9 +199,9 @@ Developer -> Git Repository -> CI Runner -> Container Registry -> Argo CD -> NKS
 
 ## 9. 완료 기준
 
-- `infra/envs/dev` plan 리뷰 완료
+- `infra/blueprints/cloud-native/foundation/examples/dev` plan 리뷰 완료
 - NKS 생성 후 kubeconfig 발급 확인
-- `infra/platform/dev` plan 리뷰 완료
+- `infra/blueprints/cloud-native/platform/examples/dev` plan 리뷰 완료
 - Argo CD/cert-manager 설치 상태 확인
 - StorageClass/PVC 동작 smoke 확인
 - Object Storage container CRUD smoke 확인

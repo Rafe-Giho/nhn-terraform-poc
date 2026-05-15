@@ -26,8 +26,10 @@ Terraform 변경은 다음 순서로 검증한다.
 
 ## 문서 구조
 
-- `docs/nhn-cloud-terraform-scope.md`: 구축 범위, 운영 판단, 표준 아키텍처
-- `docs/nhn-cloud-terraform-provider-inventory.md`: provider 전체 리소스/데이터소스 목록
+- `docs/standards/terraform-scope.md`: 구축 범위, 운영 판단, 표준 아키텍처
+- `docs/reference/provider-inventory.md`: provider 전체 리소스/데이터소스 목록
 - `docs/assets/nhn-cloud-standard-architecture.svg`: 표준 아키텍처 그림
+- `docs/guides/`: 팀원이 따라 실행하는 구축 가이드
+- `infra/blueprints/`: 사업별로 복사/실행하는 표준 Terraform blueprint
+- `infra/modules/`: blueprint가 사용하는 공통 Terraform module
 - `harness/`: 검증 스크립트와 실행 규칙
-

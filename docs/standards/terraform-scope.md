@@ -1,7 +1,9 @@
 # NHN Cloud Terraform 구축 범위와 표준 아키텍처
 
-조사 기준일: 2026-05-12  
-기준 provider: `nhn-cloud/nhncloud` `v1.0.8`  
+조사 기준일: 2026-05-12
+
+기준 provider: `nhn-cloud/nhncloud` `v1.0.8`
+
 검증 기준: Terraform Registry, NHN Cloud 사용자 가이드, provider GitHub 저장소의 `v1.0.8` 태그 `14725d0` / `nhncloud/provider.go`
 
 ## 결론
@@ -16,15 +18,17 @@
 | B | provider 코드에는 있지만 NHN Cloud 문서화가 약한 리소스 | dev smoke 검증 후 제한 적용 |
 | C | provider에도 없거나 NHN Cloud API/콘솔만 확인된 서비스 | Terraform 표준 범위 밖. 콘솔/API/별도 자동화 |
 
-전체 리소스 목록은 [provider inventory](./nhn-cloud-terraform-provider-inventory.md)에 분리했다. 실제 구축 절차는 [NHN Cloud Terraform 구축 가이드](./nhn-cloud-terraform-build-guide.md)를 진입점으로 삼고, [IaaS 3-tier 구축 가이드](./nhn-cloud-iaas-3tier-build-guide.md)와 [클라우드 네이티브 구축 가이드](./nhn-cloud-cloud-native-build-guide.md)를 각각 따른다.
+전체 리소스 목록은 [provider inventory](../reference/provider-inventory.md)에 분리했다. 실제 구축 절차는 [NHN Cloud Terraform 구축 가이드](../guides/build-guide.md)를 진입점으로 삼고, [IaaS 3-tier 구축 가이드](../guides/iaas-3tier-build-guide.md)와 [클라우드 네이티브 구축 가이드](../guides/cloud-native-build-guide.md)를 각각 따른다.
 
 ## 표준 아키텍처
 
-![NHN Cloud 표준 아키텍처 비교도](./assets/nhn-cloud-standard-architecture.svg)
+![NHN Cloud 표준 아키텍처 비교도](../assets/nhn-cloud-standard-architecture.svg)
 
 ### IaaS 3-tier 전환
 
-![IaaS 3-tier 표준 아키텍처](./assets/nhn-cloud-iaas-3tier-architecture.svg)
+[IaaS 3-tier 표준 설계 문서](./architecture/iaas-3tier.md)
+
+![IaaS 3-tier 표준 아키텍처](../assets/nhn-cloud-iaas-3tier-architecture.svg)
 
 이 구조는 기존 업무시스템을 Web/WAS/DB VM 계층으로 이전하는 전환 사업에 맞춘다. DMZ, Application, Data, Management/Operations subnet을 분리하고 모니터링, 로그, 백업, 보안 솔루션 서버를 운영망에 배치한다.
 
@@ -44,7 +48,9 @@ Terraform 밖 또는 선행 확정 범위:
 
 ### 클라우드 네이티브 전환
 
-![클라우드 네이티브 표준 아키텍처](./assets/nhn-cloud-cloud-native-architecture.svg)
+[클라우드 네이티브 표준 설계 문서](./architecture/cloud-native.md)
+
+![클라우드 네이티브 표준 아키텍처](../assets/nhn-cloud-cloud-native-architecture.svg)
 
 이 구조는 NKS 기반 서비스 플랫폼, GitOps, CI/CD, Object Storage를 중심으로 애플리케이션을 컨테이너화하는 전환 사업에 맞춘다. NHN Cloud foundation stack과 Kubernetes platform stack을 분리한다.
 
@@ -94,6 +100,52 @@ Terraform 밖 또는 선행 확정 범위:
 
 `Object Storage`는 NHN Cloud Terraform 가이드에 리소스명이 언급되고 provider 코드에도 등록되어 있다. 다만 현재 provider `docs/resources`에는 별도 md가 없으므로 첫 PoC에서 실제 CRUD smoke를 반드시 수행한다.
 
+## CRUD와 Import 기준 운영 판단
+
+`ResourcesMap`에 등록된 resource type은 Terraform resource로 선언할 수 있다는 뜻이다. 하지만 모든 resource가 같은 수준으로 수정되거나 기존 콘솔 리소스를 그대로 인수할 수 있다는 뜻은 아니다. 상세 resource별 `Create`, `Update`, `Delete`, `Import`, `ForceNew` 매트릭스는 [provider inventory](../reference/provider-inventory.md)의 `Resources` 표를 기준으로 한다.
+
+| 항목 | 개수 | 운영 의미 |
+|---|---:|---|
+| 전체 resource | 110 | provider 코드상 Terraform resource로 선언 가능 |
+| `Create` 지원 | 110 | Terraform으로 신규 생성 함수가 있음 |
+| `Delete` 지원 | 110 | Terraform destroy 또는 state 제거 시 삭제 함수가 있음 |
+| `Update` 지원 | 85 | 일부 속성을 in-place 변경 가능 |
+| `Update` 미지원 | 25 | 변경 시 재생성, detach/attach, 재실행 성격으로 봐야 함 |
+| `Importer` 지원 | 98 | 콘솔 또는 기존 리소스를 `terraform import`로 state 편입 가능 |
+| `Importer` 미지원 | 12 | 콘솔 생성 리소스를 Terraform resource로 직접 인수하기 어려움 |
+| data source | 53 | 생성/수정/삭제 없이 기존 리소스 조회와 ID 참조만 가능 |
+
+운영 판단:
+
+- provider resource 110개는 모두 생성/삭제 함수가 있으므로 Terraform 생성 대상이 될 수 있다.
+- `Update`가 없는 resource는 attach, association, route, credential, 작업성 resource가 많다. 변경 전 plan에서 `replace` 여부를 확인한다.
+- `Importer`가 있는 resource는 콘솔에서 먼저 만든 리소스를 state로 편입할 수 있다.
+- `Importer`가 없는 resource는 콘솔 선행 리소스를 직접 인수하기 어렵다. Terraform으로 새로 만들거나, data source/변수로 참조한다.
+- data source는 조회 전용이다. 기존 image, flavor, VPC, subnet, keypair, NKS cluster 같은 값을 참조할 때 사용한다.
+
+기존 리소스 인수 예시:
+
+```bash
+terraform import nhncloud_networking_vpc_v2.main <vpc-id>
+terraform import nhncloud_compute_instance_v2.web[0] <instance-id>
+terraform plan
+```
+
+import 직후 첫 plan에서는 `replace`가 발생하지 않도록 Terraform 코드의 속성을 실제 상태와 맞춘다. `ForceNew` 속성이 있는 resource는 import가 가능하더라도 코드 변경 시 재생성될 수 있다.
+
+콘솔 선행 후 Terraform에서 참조하는 값:
+
+| 값 | 처리 방식 | 이유 |
+|---|---|---|
+| External network/subnet ID | 변수 주입 | Floating IP, LB, NKS public endpoint의 외부 연결 기준 |
+| Internet Gateway ID | 변수 주입 | routing table attach 대상. 기존 gateway 정책과 충돌 방지 |
+| Image UUID | data source 또는 변수 주입 | OS image는 운영 표준 이미지 승인 후 사용 |
+| Flavor UUID | data source 또는 변수 주입 | quota/성능/비용 기준을 사전 확정 |
+| Keypair name | 콘솔 생성 후 data source 또는 변수 주입 권장 | Terraform 생성 시 private key가 state에 남을 수 있음 |
+| DNS zone/TLS 인증서/registry credential | 콘솔 또는 별도 보안 자동화 우선 | provider 문서화와 secret state 관리 리스크 |
+| Quota | 콘솔 확인 | Terraform apply 실패와 부분 생성 방지 |
+| NKS addon/version label | 콘솔/가이드 확인 후 변수 주입 | 잘못된 값은 cluster 생성 실패 또는 재생성 위험 |
+
 ## Provider 코드상 추가 노출 범위
 
 아래 영역은 provider 코드에 등록되어 있으므로 Terraform resource type 자체는 존재한다. 하지만 NHN Cloud 사용자 가이드에서 Terraform 표준 범위로 명확히 설명되지 않았거나, OpenStack provider 계열 리소스를 그대로 노출한 성격이 강해 dev 검증 전에는 운영 표준으로 보지 않는다.
@@ -113,7 +165,7 @@ Terraform 밖 또는 선행 확정 범위:
 | Orchestration | `nhncloud_orchestration_stack_v1` | B |
 | Object Storage tempurl | `nhncloud_objectstorage_tempurl_v1` | B |
 
-정확한 resource/data source 이름은 [provider inventory](./nhn-cloud-terraform-provider-inventory.md)에 전부 기록했다.
+정확한 resource/data source 이름은 [provider inventory](../reference/provider-inventory.md)에 전부 기록했다.
 
 ## Terraform 표준 범위 밖
 
@@ -133,11 +185,11 @@ Terraform 밖 또는 선행 확정 범위:
 
 | 파일 | 역할 |
 |---|---|
-| [AGENTS.md](../AGENTS.md) | 이 저장소에서 작업할 때 따라야 하는 provider/검증/승인 규칙 |
-| [harness/README.md](../harness/README.md) | 하네스 실행 순서와 승인 기준 |
-| [extract-provider-inventory.ps1](../harness/scripts/extract-provider-inventory.ps1) | provider 코드의 `ResourcesMap`, `DataSourcesMap` 추출 |
-| [static-check.ps1](../harness/scripts/static-check.ps1) | `fmt`, `init -backend=false`, `validate`, `tflint`, `checkov/tfsec` 실행 |
-| [plan-json.ps1](../harness/scripts/plan-json.ps1) | `terraform plan`과 plan JSON 생성 |
+| [AGENTS.md](../../AGENTS.md) | 이 저장소에서 작업할 때 따라야 하는 provider/검증/승인 규칙 |
+| [harness/README.md](../../harness/README.md) | 하네스 실행 순서와 승인 기준 |
+| [extract-provider-inventory.ps1](../../harness/scripts/extract-provider-inventory.ps1) | provider 코드의 `ResourcesMap`, `DataSourcesMap` 추출 |
+| [static-check.ps1](../../harness/scripts/static-check.ps1) | `fmt`, `init -backend=false`, `validate`, `tflint`, `checkov/tfsec` 실행 |
+| [plan-json.ps1](../../harness/scripts/plan-json.ps1) | `terraform plan`과 plan JSON 생성 |
 
 검증 gate:
 
@@ -152,13 +204,12 @@ Terraform 밖 또는 선행 확정 범위:
 
 ```text
 infra/
-  envs/
-    iaas-3tier-dev/   # IaaS 3-tier foundation
-    cloud-native-dev/ # NKS foundation
-    stage/
-    prod/
-  platform/
-    cloud-native-dev/ # Kubernetes platform addons after NKS kubeconfig is ready
+  blueprints/
+    iaas-3tier/
+      examples/dev/
+    cloud-native/
+      foundation/examples/dev/
+      platform/examples/dev/
   modules/
     network/
     security/
@@ -183,8 +234,8 @@ docs/
 ## 다음 PoC 순서
 
 1. `provider inventory`를 baseline으로 확정
-2. 클라우드 네이티브 전환안은 기존 `network/security/object-storage/nks/k8s-platform` 모듈로 smoke stack 검증
-3. IaaS 3-tier 전환안은 `compute/load-balancer/block-storage` 모듈을 추가한 뒤 Web/WAS/DB 최소 stack 검증
+2. 클라우드 네이티브 전환안은 `infra/blueprints/cloud-native/foundation/examples/dev`, `infra/blueprints/cloud-native/platform/examples/dev`로 smoke stack 검증
+3. IaaS 3-tier 전환안은 `infra/blueprints/iaas-3tier/examples/dev`로 Web/WAS/DB 최소 stack 검증
 4. `harness/scripts/static-check.ps1` 실행
 5. 사용자 승인 후 dev 환경에서 최소 리소스 apply
 6. 실제 성공한 리소스만 운영 표준 등급 A로 승격

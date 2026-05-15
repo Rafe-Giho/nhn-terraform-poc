@@ -1,22 +1,23 @@
 # NHN Cloud Terraform 구축 가이드
 
-기준 provider: `nhn-cloud/nhncloud` `= 1.0.8`  
+기준 provider: `nhn-cloud/nhncloud` `= 1.0.8`
+
 검증 기준: Terraform Registry provider schema, provider GitHub `v1.0.8` 태그
 
 이 문서는 구축 가이드의 진입점이다. 실제 절차는 전환 유형별 가이드를 따른다.
 
 | 전환 유형 | 대상 | 가이드 |
 |---|---|---|
-| IaaS 3-tier 전환 | 기존 VM/물리 업무시스템을 Web/WAS/DB와 운영 솔루션 서버 구조로 이전 | [IaaS 3-tier 구축 가이드](./nhn-cloud-iaas-3tier-build-guide.md) |
-| 클라우드 네이티브 전환 | NKS, GitOps, CI/CD, Object Storage 기반 컨테이너 플랫폼 구축 | [클라우드 네이티브 구축 가이드](./nhn-cloud-cloud-native-build-guide.md) |
+| IaaS 3-tier 전환 | 기존 VM/물리 업무시스템을 Web/WAS/DB와 운영 솔루션 서버 구조로 이전 | [IaaS 3-tier 구축 가이드](./iaas-3tier-build-guide.md) |
+| 클라우드 네이티브 전환 | NKS, GitOps, CI/CD, Object Storage 기반 컨테이너 플랫폼 구축 | [클라우드 네이티브 구축 가이드](./cloud-native-build-guide.md) |
 
 관련 문서:
 
-- [구축 범위](./nhn-cloud-terraform-scope.md)
-- [provider inventory](./nhn-cloud-terraform-provider-inventory.md)
-- [표준 아키텍처 비교도](./assets/nhn-cloud-standard-architecture.svg)
-- [IaaS 3-tier 표준 아키텍처](./assets/nhn-cloud-iaas-3tier-architecture.svg)
-- [클라우드 네이티브 표준 아키텍처](./assets/nhn-cloud-cloud-native-architecture.svg)
+- [구축 범위](../standards/terraform-scope.md)
+- [provider inventory](../reference/provider-inventory.md)
+- [표준 아키텍처 비교도](../assets/nhn-cloud-standard-architecture.svg)
+- [IaaS 3-tier 표준 아키텍처](../assets/nhn-cloud-iaas-3tier-architecture.svg)
+- [클라우드 네이티브 표준 아키텍처](../assets/nhn-cloud-cloud-native-architecture.svg)
 
 ## 1. 선택 기준
 
@@ -29,7 +30,7 @@
 | 배포 방식 | 수동 배포, SCP, Ansible, VM image, CI 연동 | GitOps, Argo CD, CI runner, image registry |
 | 데이터 계층 | VM 기반 DB 또는 별도 Managed DB 검증 | Managed DB 또는 외부 DB 권장, stateful workload는 별도 검증 |
 | Terraform 적합도 | 네트워크/보안/VM/LB/볼륨 표준화에 적합 | NKS foundation과 platform add-on 표준화에 적합 |
-| 현재 저장소 구현 | 설계/가이드 기준. compute/lb/volume 모듈 확장 필요 | `infra/envs/dev`, `infra/platform/dev`에 기본 골격 구현 |
+| 현재 저장소 구현 | `infra/blueprints/iaas-3tier/examples/dev`에 기본 blueprint 구현 | `infra/blueprints/cloud-native/foundation/examples/dev`, `infra/blueprints/cloud-native/platform/examples/dev`에 기본 blueprint 구현 |
 
 두 표준안은 같은 NHN Cloud provider를 사용하지만 state, 승인 절차, 운영 단위를 분리한다. 한 state에 섞으면 장애 범위와 변경 영향이 커진다.
 
@@ -68,11 +69,12 @@ export TF_VAR_nhncloud_region="KR1"
 
 ```text
 infra/
-  envs/
-    iaas-3tier-dev/         # IaaS 3-tier foundation, compute, lb, storage
-    cloud-native-dev/       # VPC, subnet, security group, Object Storage, NKS
-  platform/
-    cloud-native-dev/       # NKS 내부 namespace, StorageClass, Helm add-on
+  blueprints/
+    iaas-3tier/
+      examples/dev/         # IaaS 3-tier foundation, compute, lb, storage
+    cloud-native/
+      foundation/examples/dev/
+      platform/examples/dev/
   modules/
     network/
     security/
@@ -88,17 +90,19 @@ infra/
 
 | 구분 | 현재 경로 | 상태 |
 |---|---|---|
-| 클라우드 네이티브 foundation | `infra/envs/dev` | 구현됨 |
-| 클라우드 네이티브 platform | `infra/platform/dev` | 구현됨 |
-| IaaS 3-tier stack | `infra/envs/iaas-3tier-dev` 권장 | 추가 구현 필요 |
-| compute/lb/block-storage 모듈 | `infra/modules/*` 권장 | 추가 구현 필요 |
+| IaaS 3-tier blueprint | `infra/blueprints/iaas-3tier/examples/dev` | 구현됨 |
+| 클라우드 네이티브 foundation blueprint | `infra/blueprints/cloud-native/foundation/examples/dev` | 구현됨 |
+| 클라우드 네이티브 platform blueprint | `infra/blueprints/cloud-native/platform/examples/dev` | 구현됨 |
+| compute/lb/block-storage 모듈 | `infra/modules/compute`, `infra/modules/load-balancer`, `infra/modules/block-storage` | 구현됨 |
 
 ## 4. 공통 검증 게이트
 
 정적 검증:
 
 ```bash
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/envs/dev
+pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
+pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
+pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
 Registry schema 검증:
@@ -110,7 +114,9 @@ pwsh ./harness/scripts/verify-registry-schema.ps1 -ProviderVersion 1.0.8
 Plan JSON:
 
 ```bash
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/envs/dev
+pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
+pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
+pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
 검토 항목:
@@ -127,6 +133,6 @@ pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/envs/dev
 
 ## 5. 다음 문서
 
-IaaS 기반 전환이면 [IaaS 3-tier 구축 가이드](./nhn-cloud-iaas-3tier-build-guide.md)를 따른다.
+IaaS 기반 전환이면 [IaaS 3-tier 구축 가이드](./iaas-3tier-build-guide.md)를 따른다.
 
-NKS 기반 전환이면 [클라우드 네이티브 구축 가이드](./nhn-cloud-cloud-native-build-guide.md)를 따른다.
+NKS 기반 전환이면 [클라우드 네이티브 구축 가이드](./cloud-native-build-guide.md)를 따른다.

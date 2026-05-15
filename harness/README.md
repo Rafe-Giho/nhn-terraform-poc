@@ -11,13 +11,17 @@ pwsh ./harness/scripts/extract-provider-inventory.ps1 \
   -OutputPath ./harness/out/nhncloud-provider-inventory.md
 
 # 2. 정적 검증
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/envs/dev
+pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
+pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
+pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
 
 # 3. Terraform Registry provider schema 검증
 pwsh ./harness/scripts/verify-registry-schema.ps1 -ProviderVersion 1.0.8
 
 # 4. plan JSON 생성
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/envs/dev
+pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
+pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
+pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
 ## 승인 기준
