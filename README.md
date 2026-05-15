@@ -86,6 +86,8 @@ Terraform 실행 전에 아래 값이 필요합니다.
 
 전환 유형에 맞는 가이드를 먼저 선택하고, `terraform.tfvars.example`을 복사한 뒤 실제 값으로 채운다. 민감값은 가능하면 환경 변수나 CI secret으로 주입한다.
 
+IaaS 3-tier 실제 계정 검증 브랜치에서는 [validation/iaas-3tier](./validation/iaas-3tier)를 사용한다. 이 디렉터리는 표준 blueprint와 필요한 모듈을 복제한 독립 실행 workspace다.
+
 IaaS 3-tier 전환:
 
 ```bash

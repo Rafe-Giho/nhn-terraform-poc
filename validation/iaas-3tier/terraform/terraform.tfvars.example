@@ -1,0 +1,77 @@
+# Copy this file to terraform.tfvars and fill real values.
+# Do not commit terraform.tfvars.
+
+nhncloud_user_name = "user@example.com"
+nhncloud_tenant_id = "00000000000000000000000000000000"
+nhncloud_password  = "set-by-local-env-or-secret-manager"
+nhncloud_auth_url  = "https://api-identity-infrastructure.nhncloudservice.com/v2.0"
+nhncloud_region    = "KR1"
+
+project_prefix = "sgh"
+environment    = "dev"
+
+vpc_cidr = "10.20.0.0/16"
+
+subnets = {
+  dmz = {
+    cidr = "10.20.10.0/24"
+  }
+  app = {
+    cidr = "10.20.20.0/24"
+  }
+  data = {
+    cidr = "10.20.30.0/24"
+  }
+  management = {
+    cidr = "10.20.40.0/24"
+  }
+  operations = {
+    cidr = "10.20.50.0/24"
+  }
+}
+
+# Console-precreated or console-checked values.
+internet_gateway_id = "replace-with-internet-gateway-id"
+keypair_name        = "replace-with-keypair-name"
+image_id            = "replace-with-server-image-uuid"
+availability_zone   = "kr-pub-a"
+
+flavor_ids = {
+  web = "replace-with-web-flavor-uuid"
+  was = "replace-with-was-flavor-uuid"
+  db  = "replace-with-db-flavor-uuid"
+  ops = "replace-with-ops-flavor-uuid"
+}
+
+management_cidrs = ["203.0.113.10/32"]
+
+web_count = 2
+was_count = 2
+db_count  = 1
+
+object_storage_containers = {
+  artifacts = {
+    name = "sgh-iaas-dev-artifacts"
+    metadata = {
+      purpose = "release-artifacts"
+    }
+  }
+  backups = {
+    name = "sgh-iaas-dev-backups"
+    metadata = {
+      purpose = "backup"
+    }
+  }
+  logs = {
+    name = "sgh-iaas-dev-logs"
+    metadata = {
+      purpose = "log-archive"
+    }
+  }
+  install_files = {
+    name = "sgh-iaas-dev-install-files"
+    metadata = {
+      purpose = "solution-install-files"
+    }
+  }
+}
