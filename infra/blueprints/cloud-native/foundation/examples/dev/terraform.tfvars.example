@@ -8,7 +8,7 @@ nhncloud_auth_url  = "https://api-identity-infrastructure.nhncloudservice.com/v2
 nhncloud_region    = "KR1"
 
 project_prefix = "sgh"
-environment    = "dev"
+environment    = "cloud-native-dev"
 
 vpc_cidr = "10.10.0.0/16"
 
@@ -36,22 +36,21 @@ management_cidrs = ["203.0.113.10/32"]
 
 object_storage_containers = {
   artifacts = {
-    name = "sgh-dev-artifacts"
+    name = "sgh-cloud-native-dev-artifacts"
     metadata = {
       purpose = "ci-artifacts"
     }
   }
   backups = {
-    name = "sgh-dev-backups"
+    name = "sgh-cloud-native-dev-backups"
     metadata = {
       purpose = "backup"
     }
   }
   logs = {
-    name = "sgh-dev-pipeline-logs"
+    name = "sgh-cloud-native-dev-pipeline-logs"
     metadata = {
       purpose = "pipeline-logs"
     }
   }
 }
-

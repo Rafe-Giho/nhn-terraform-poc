@@ -75,7 +75,7 @@ locals {
 }
 
 module "network" {
-  source = "../../modules/network"
+  source = "../../../../../modules/network"
 
   name_prefix         = local.name_prefix
   vpc_cidr            = var.vpc_cidr
@@ -84,13 +84,13 @@ module "network" {
 }
 
 module "security" {
-  source = "../../modules/security"
+  source = "../../../../../modules/security"
 
   security_groups = local.security_groups
 }
 
 module "object_storage" {
-  source = "../../modules/object-storage"
+  source = "../../../../../modules/object-storage"
 
   name_prefix = local.name_prefix
   containers  = var.object_storage_containers
@@ -98,7 +98,7 @@ module "object_storage" {
 }
 
 module "nks" {
-  source = "../../modules/nks"
+  source = "../../../../../modules/nks"
 
   cluster = {
     name                = "${local.name_prefix}-${var.nks_cluster_name}"
@@ -126,4 +126,3 @@ module "nks" {
 
   nodegroups = var.additional_nodegroups
 }
-

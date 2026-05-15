@@ -5,7 +5,7 @@ kubeconfig_path    = "/home/user/Downloads/ta-sgh-vxlan-istio-ambient-cls_kubeco
 kubeconfig_context = "nks_ta-sgh-vxlan-istio-ambient-cls_2fefc532-2057-48b8-8ab3-b67e82640ff5"
 
 project_prefix = "sgh"
-environment    = "dev"
+environment    = "cloud-native-dev"
 
 # Extra Helm release example for GitLab Runner.
 # Do not put runner tokens directly in this file. Use a pre-created Kubernetes Secret,

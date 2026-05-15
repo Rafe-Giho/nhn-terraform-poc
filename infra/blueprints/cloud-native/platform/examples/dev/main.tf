@@ -44,7 +44,7 @@ locals {
 }
 
 module "platform" {
-  source = "../../modules/k8s-platform"
+  source = "../../../../../modules/k8s-platform"
 
   namespaces       = var.namespaces
   namespace_labels = local.common_labels
@@ -52,4 +52,3 @@ module "platform" {
   storage_classes  = var.storage_classes
   helm_releases    = merge(local.base_helm_releases, var.extra_helm_releases)
 }
-
