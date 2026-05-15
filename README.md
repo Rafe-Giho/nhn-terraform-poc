@@ -42,6 +42,10 @@ infra/
     k8s-platform/
 harness/
   scripts/                                  # 검증/인벤토리 추출 스크립트
+tools/
+  new-project/                              # 사업별 Terraform workspace 생성 스크립트
+examples/
+  projects/                                 # 생성 결과 구조 예시
 ```
 
 ## 먼저 읽을 문서
@@ -67,6 +71,15 @@ harness/
 
 ## 콘솔에서 먼저 확인할 값
 
+로컬 실행 도구:
+
+| 도구 | 용도 |
+|---|---|
+| Terraform `>= 1.5` | NHN Cloud 리소스 plan/apply |
+| Bash | 프로젝트 생성과 하네스 스크립트 실행 |
+| Python 3 | provider inventory/schema 하네스 처리 |
+| tflint, checkov 또는 tfsec | 선택 정적 검증 |
+
 Terraform 실행 전에 아래 값이 필요합니다.
 
 | 값 | 용도 |
@@ -82,64 +95,68 @@ Terraform 실행 전에 아래 값이 필요합니다.
 
 자세한 목록은 [구축 가이드](./docs/guides/build-guide.md)의 공통 사전 준비와 전환 유형별 가이드를 참고하세요.
 
-## 빠른 시작
+## 프로젝트 생성
 
-전환 유형에 맞는 가이드를 먼저 선택하고, `terraform.tfvars.example`을 복사한 뒤 실제 값으로 채운다. 민감값은 가능하면 환경 변수나 CI secret으로 주입한다.
+팀원은 `infra/blueprints`를 직접 수정하지 않고, 표준 blueprint에서 사업별 workspace를 생성해 사용한다. 기본 생성 위치인 `projects/`는 실제 계정값과 state가 생기는 작업 디렉터리라 커밋하지 않는다.
 
 IaaS 3-tier 전환:
 
 ```bash
-cp ./infra/blueprints/iaas-3tier/examples/dev/terraform.tfvars.example ./infra/blueprints/iaas-3tier/examples/dev/terraform.tfvars
+./tools/new-project/create-iaas-3tier.sh customer-a dev
+cd ./projects/customer-a/iaas-3tier/dev
 
-terraform -chdir=infra/blueprints/iaas-3tier/examples/dev init -backend=false
-terraform -chdir=infra/blueprints/iaas-3tier/examples/dev validate
-terraform -chdir=infra/blueprints/iaas-3tier/examples/dev plan
+cp ./terraform/terraform.tfvars.example ./terraform/terraform.tfvars
+terraform -chdir=terraform init -backend=false
+terraform -chdir=terraform validate
+terraform -chdir=terraform plan
 ```
 
-클라우드 네이티브 foundation:
+클라우드 네이티브 전환:
 
 ```bash
-cp ./infra/blueprints/cloud-native/foundation/examples/dev/terraform.tfvars.example ./infra/blueprints/cloud-native/foundation/examples/dev/terraform.tfvars
+./tools/new-project/create-cloud-native.sh customer-a dev
+cd ./projects/customer-a/cloud-native/dev
 
-terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev init -backend=false
-terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev validate
-terraform -chdir=infra/blueprints/cloud-native/foundation/examples/dev plan
+cp ./foundation/terraform.tfvars.example ./foundation/terraform.tfvars
+terraform -chdir=foundation init -backend=false
+terraform -chdir=foundation validate
+terraform -chdir=foundation plan
 ```
 
 NKS 생성 후 Kubernetes platform:
 
 ```bash
-cp ./infra/blueprints/cloud-native/platform/examples/dev/terraform.tfvars.example ./infra/blueprints/cloud-native/platform/examples/dev/terraform.tfvars
+cp ./platform/terraform.tfvars.example ./platform/terraform.tfvars
 
-terraform -chdir=infra/blueprints/cloud-native/platform/examples/dev init
-terraform -chdir=infra/blueprints/cloud-native/platform/examples/dev validate
-terraform -chdir=infra/blueprints/cloud-native/platform/examples/dev plan
+terraform -chdir=platform init
+terraform -chdir=platform validate
+terraform -chdir=platform plan
 ```
 
-`apply`는 plan을 검토한 뒤 실행합니다.
+`terraform apply`는 plan 검토와 승인 후 실행한다. 장기 운영 프로젝트는 생성된 workspace를 별도 사업 repository로 옮겨 state/backend 정책을 확정한 뒤 관리한다.
 
 ## 검증
 
 Provider schema 검증:
 
 ```bash
-pwsh ./harness/scripts/verify-registry-schema.ps1 -ProviderVersion 1.0.8
+./harness/scripts/verify-registry-schema.sh --provider-version 1.0.8
 ```
 
 정적 검증:
 
 ```bash
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/iaas-3tier/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/cloud-native/foundation/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
 Plan JSON 생성:
 
 ```bash
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/iaas-3tier/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/foundation/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
 ## 운영 주의사항

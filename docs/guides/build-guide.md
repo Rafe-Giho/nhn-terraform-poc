@@ -36,6 +36,15 @@
 
 ## 2. 공통 사전 준비
 
+로컬 실행 도구:
+
+| 도구 | 용도 |
+|---|---|
+| Terraform `>= 1.5` | NHN Cloud 리소스 plan/apply |
+| Bash | 프로젝트 생성과 하네스 스크립트 실행 |
+| Python 3 | provider inventory/schema 하네스 처리 |
+| tflint, checkov 또는 tfsec | 선택 정적 검증 |
+
 아래 값은 전환 유형과 무관하게 먼저 확인한다.
 
 | 항목 | 필수 | 이유 |
@@ -84,6 +93,11 @@ infra/
     block-storage/
     nks/
     k8s-platform/
+tools/
+  new-project/
+    create-iaas-3tier.sh
+    create-cloud-native.sh
+projects/                 # 생성 스크립트의 기본 출력 경로. 커밋하지 않음
 ```
 
 현재 저장소의 구현 경로는 다음과 같다.
@@ -95,28 +109,102 @@ infra/
 | 클라우드 네이티브 platform blueprint | `infra/blueprints/cloud-native/platform/examples/dev` | 구현됨 |
 | compute/lb/block-storage 모듈 | `infra/modules/compute`, `infra/modules/load-balancer`, `infra/modules/block-storage` | 구현됨 |
 
-## 4. 공통 검증 게이트
+## 4. 사업별 workspace 생성
+
+팀원은 `infra/blueprints`를 직접 수정하지 않는다. 표준 원본에서 사업별 workspace를 생성한 뒤 그 안에서 `terraform.tfvars`, backend, state를 관리한다.
+
+IaaS 3-tier:
+
+```bash
+./tools/new-project/create-iaas-3tier.sh customer-a dev
+cd ./projects/customer-a/iaas-3tier/dev
+```
+
+클라우드 네이티브:
+
+```bash
+./tools/new-project/create-cloud-native.sh customer-a dev
+cd ./projects/customer-a/cloud-native/dev
+```
+
+기본 출력 경로인 `projects/`는 `.gitignore` 대상이다. 실제 사업 repository로 관리하려면 세 번째 인자에 별도 경로를 지정한다.
+
+```bash
+./tools/new-project/create-iaas-3tier.sh customer-a prod ../customer-a-infra/iaas-3tier/prod
+./tools/new-project/create-cloud-native.sh customer-a prod ../customer-a-infra/cloud-native/prod
+```
+
+생성된 workspace 안에는 실행 root와 필요한 모듈 복제본이 함께 들어간다. 이후 사업별 변경은 생성된 workspace에서 수행하고, 공통 표준 개선은 `infra/blueprints`와 `infra/modules`에 별도 반영한다.
+
+## 5. 공통 Terraform 실행 흐름
+
+모든 stack은 아래 순서를 따른다.
+
+```bash
+cp ./terraform.tfvars.example ./terraform.tfvars
+terraform init -backend=false
+terraform fmt -recursive
+terraform validate
+terraform plan -out=tfplan
+terraform show -json tfplan > plan.json
+```
+
+remote state를 사용할 때는 backend 설정 파일을 먼저 확정한 뒤 초기화한다.
+
+```bash
+terraform init -backend-config=backend.s3.hcl
+```
+
+plan 검토 후 적용한다.
+
+```bash
+terraform apply tfplan
+```
+
+운영 변경 전에는 항상 현재 상태를 먼저 확인한다.
+
+```bash
+terraform plan -refresh-only
+```
+
+기존 콘솔 리소스를 편입해야 할 때는 import 후 첫 plan에서 재생성 여부를 확인한다.
+
+```bash
+terraform import nhncloud_networking_vpc_v2.main <vpc-id>
+terraform plan
+```
+
+커밋 금지 대상:
+
+- `terraform.tfvars`
+- `.terraform/`
+- `.terraform.lock.hcl`
+- `*.tfstate`, `*.tfstate.*`
+- `tfplan`, `*.tfplan`, `plan.json`
+- kubeconfig, token, license key, private key
+
+## 6. 공통 검증 게이트
 
 정적 검증:
 
 ```bash
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/iaas-3tier/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/cloud-native/foundation/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
 Registry schema 검증:
 
 ```bash
-pwsh ./harness/scripts/verify-registry-schema.ps1 -ProviderVersion 1.0.8
+./harness/scripts/verify-registry-schema.sh --provider-version 1.0.8
 ```
 
 Plan JSON:
 
 ```bash
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/iaas-3tier/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/foundation/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
 검토 항목:
@@ -131,7 +219,7 @@ pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-nat
 - state에 민감값이 들어갈 가능성
 - 콘솔 선행 리소스 ID가 실제 리전/프로젝트와 일치하는지 여부
 
-## 5. 다음 문서
+## 7. 다음 문서
 
 IaaS 기반 전환이면 [IaaS 3-tier 구축 가이드](./iaas-3tier-build-guide.md)를 따른다.
 

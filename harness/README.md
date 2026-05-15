@@ -2,26 +2,33 @@
 
 이 디렉터리는 NHN Cloud Terraform 작업을 반복 가능하게 검증하기 위한 하네스다.
 
+## 필요 도구
+
+- Terraform `>= 1.5`
+- Bash
+- Python 3
+- 선택 도구: `tflint`, `checkov` 또는 `tfsec`
+
 ## 실행 순서
 
 ```bash
 # 1. provider 코드 기준 리소스 인벤토리 생성
-pwsh ./harness/scripts/extract-provider-inventory.ps1 \
-  -ProviderSource ./.provider-src \
-  -OutputPath ./harness/out/nhncloud-provider-inventory.md
+./harness/scripts/extract-provider-inventory.sh \
+  --provider-source ./.provider-src \
+  --output-path ./harness/out/nhncloud-provider-inventory.md
 
 # 2. 정적 검증
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
-pwsh ./harness/scripts/static-check.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/iaas-3tier/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/cloud-native/foundation/examples/dev
+./harness/scripts/static-check.sh --terraform-root ./infra/blueprints/cloud-native/platform/examples/dev
 
 # 3. Terraform Registry provider schema 검증
-pwsh ./harness/scripts/verify-registry-schema.ps1 -ProviderVersion 1.0.8
+./harness/scripts/verify-registry-schema.sh --provider-version 1.0.8
 
 # 4. plan JSON 생성
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/iaas-3tier/examples/dev
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/foundation/examples/dev
-pwsh ./harness/scripts/plan-json.ps1 -TerraformRoot ./infra/blueprints/cloud-native/platform/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/iaas-3tier/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/foundation/examples/dev
+./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
 ## 승인 기준
