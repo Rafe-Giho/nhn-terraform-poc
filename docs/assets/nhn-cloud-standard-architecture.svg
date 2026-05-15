@@ -27,14 +27,14 @@
 
   <rect class="bg" width="1440" height="900"/>
   <text class="title" x="42" y="48">NHN Cloud 표준 아키텍처 비교도</text>
-  <text class="subtitle" x="42" y="72">전환형 IaaS 3-tier와 클라우드 네이티브 NKS 구조를 분리해 설계, state, 승인 절차를 관리한다.</text>
+  <text class="subtitle" x="42" y="72">두 표준 모두 VPC 1개에 public/private/management routing table과 역할별 subnet을 분리한다.</text>
 
   <rect class="card" x="42" y="105" width="650" height="665" rx="14"/>
   <text class="h1" x="72" y="142">IaaS 3-tier 전환</text>
   <text class="subtitle" x="72" y="166">기존 업무시스템을 VM 기반 Web/WAS/DB와 운영 솔루션 서버로 이전</text>
 
   <rect class="iaas" x="72" y="195" width="590" height="105" rx="10"/>
-  <text class="h2" x="96" y="224">Public / DMZ</text>
+  <text class="h2" x="96" y="224">Public / DMZ - public RT</text>
   <rect class="box" x="96" y="245" width="130" height="36" rx="7"/>
   <text class="label" x="130" y="268">Public LB</text>
   <rect class="box" x="258" y="245" width="130" height="36" rx="7"/>
@@ -43,14 +43,14 @@
   <text class="label" x="465" y="268">Web Servers</text>
 
   <rect class="iaas" x="72" y="325" width="590" height="105" rx="10"/>
-  <text class="h2" x="96" y="354">Application</text>
+  <text class="h2" x="96" y="354">Private Web / Application - private RT</text>
   <rect class="box" x="112" y="375" width="160" height="36" rx="7"/>
   <text class="label" x="155" y="398">WAS Servers</text>
   <rect class="box" x="312" y="375" width="160" height="36" rx="7"/>
   <text class="label" x="357" y="398">Batch Jobs</text>
 
   <rect class="iaas" x="72" y="455" width="590" height="105" rx="10"/>
-  <text class="h2" x="96" y="484">Data</text>
+  <text class="h2" x="96" y="484">Data - private RT</text>
   <rect class="box" x="112" y="505" width="150" height="36" rx="7"/>
   <text class="label" x="152" y="528">DB Servers</text>
   <rect class="box" x="302" y="505" width="130" height="36" rx="7"/>
@@ -59,7 +59,7 @@
   <text class="label" x="515" y="528">NAS</text>
 
   <rect class="ops" x="72" y="585" width="590" height="130" rx="10"/>
-  <text class="h2" x="96" y="614">Management / Operations</text>
+  <text class="h2" x="96" y="614">Management / Operations - management RT</text>
   <rect class="box" x="96" y="635" width="120" height="36" rx="7"/>
   <text class="label" x="130" y="658">Bastion</text>
   <rect class="box" x="240" y="635" width="140" height="36" rx="7"/>
@@ -79,10 +79,10 @@
 
   <rect class="card" x="748" y="105" width="650" height="665" rx="14"/>
   <text class="h1" x="778" y="142">클라우드 네이티브 전환</text>
-  <text class="subtitle" x="778" y="166">NKS, GitOps, CI/CD, Object Storage 중심의 컨테이너 플랫폼</text>
+  <text class="subtitle" x="778" y="166">NKS, GitOps, CI/CD, DevOps 연동 서버, Object Storage 중심의 컨테이너 플랫폼</text>
 
   <rect class="native" x="778" y="195" width="590" height="105" rx="10"/>
-  <text class="h2" x="802" y="224">Public Entry</text>
+  <text class="h2" x="802" y="224">Public Entry - public RT</text>
   <rect class="box" x="820" y="245" width="130" height="36" rx="7"/>
   <text class="label" x="858" y="268">DNS</text>
   <rect class="box" x="982" y="245" width="150" height="36" rx="7"/>
@@ -91,7 +91,7 @@
   <text class="label" x="1206" y="268">Ingress</text>
 
   <rect class="native" x="778" y="325" width="590" height="145" rx="10"/>
-  <text class="h2" x="802" y="354">NKS Service Platform</text>
+  <text class="h2" x="802" y="354">NKS Service Platform - private RT</text>
   <rect class="box" x="810" y="380" width="145" height="42" rx="7"/>
   <text class="label" x="843" y="405">Node Groups</text>
   <rect class="box" x="985" y="380" width="145" height="42" rx="7"/>
@@ -102,15 +102,15 @@
   <text class="tiny" x="930" y="448">web, api, batch</text>
 
   <rect class="ops" x="778" y="495" width="590" height="105" rx="10"/>
-  <text class="h2" x="802" y="524">Platform Add-ons</text>
-  <rect class="box" x="810" y="545" width="115" height="36" rx="7"/>
-  <text class="label" x="846" y="568">Argo CD</text>
-  <rect class="box" x="950" y="545" width="130" height="36" rx="7"/>
-  <text class="label" x="982" y="568">CI Runner</text>
-  <rect class="box" x="1105" y="545" width="130" height="36" rx="7"/>
-  <text class="label" x="1127" y="568">Monitoring</text>
-  <rect class="box" x="1255" y="545" width="90" height="36" rx="7"/>
-  <text class="label" x="1272" y="568">Logs</text>
+  <text class="h2" x="802" y="524">DevOps Integration / Add-ons</text>
+  <rect class="box" x="810" y="545" width="125" height="36" rx="7"/>
+  <text class="label" x="832" y="568">GitLab/Gitea</text>
+  <rect class="box" x="960" y="545" width="105" height="36" rx="7"/>
+  <text class="label" x="980" y="568">Jenkins</text>
+  <rect class="box" x="1090" y="545" width="105" height="36" rx="7"/>
+  <text class="label" x="1120" y="568">Argo CD</text>
+  <rect class="box" x="1220" y="545" width="125" height="36" rx="7"/>
+  <text class="label" x="1242" y="568">CI Runner</text>
 
   <rect class="native" x="778" y="625" width="590" height="90" rx="10"/>
   <text class="h2" x="802" y="654">Storage / Data</text>
@@ -130,5 +130,5 @@
 
   <rect class="manual" x="42" y="800" width="1356" height="54" rx="10"/>
   <text class="h2" x="72" y="823">공통 선행 확인</text>
-  <text class="small" x="72" y="846">API endpoint, tenant/project, region, keypair, image/flavor, external network/subnet, quota, DNS/TLS, 보안 요구사항, remote state 저장소</text>
+  <text class="small" x="72" y="846">API endpoint, tenant/project, region, keypair, image/flavor, external network/subnet, quota, DNS/TLS, NACL/Flow Log/NAT/Service Gateway, remote state 저장소</text>
 </svg>

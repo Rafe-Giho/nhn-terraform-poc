@@ -39,7 +39,7 @@ if [[ -e "$TARGET_DIR" ]]; then
   exit 1
 fi
 
-mkdir -p "$TARGET_DIR/foundation" "$TARGET_DIR/platform" "$TARGET_DIR/modules"
+mkdir -p "$TARGET_DIR/foundation" "$TARGET_DIR/platform" "$TARGET_DIR/modules" "$TARGET_DIR/harness/scripts"
 
 cp "$FOUNDATION_BLUEPRINT"/backend.s3.example.hcl "$TARGET_DIR/foundation/"
 cp "$FOUNDATION_BLUEPRINT"/main.tf "$TARGET_DIR/foundation/"
@@ -56,9 +56,11 @@ cp "$PLATFORM_BLUEPRINT"/terraform.tfvars.example "$TARGET_DIR/platform/"
 cp "$PLATFORM_BLUEPRINT"/variables.tf "$TARGET_DIR/platform/"
 cp "$PLATFORM_BLUEPRINT"/versions.tf "$TARGET_DIR/platform/"
 
-for module in network security object-storage nks k8s-platform; do
+for module in network security compute block-storage object-storage nks k8s-platform; do
   cp -R "$MODULES_DIR/$module" "$TARGET_DIR/modules/"
 done
+
+cp "$REPO_ROOT"/harness/scripts/*.sh "$TARGET_DIR/harness/scripts/"
 
 sed -i 's#../../../../../modules/#../modules/#g' "$TARGET_DIR/foundation/main.tf"
 sed -i 's#../../../../../modules/#../modules/#g' "$TARGET_DIR/platform/main.tf"
@@ -67,6 +69,11 @@ cat > "$TARGET_DIR/README.md" <<EOF
 # $PROJECT_NAME Cloud Native $ENV_NAME
 
 이 디렉터리는 NHN Cloud NKS 기반 클라우드 네이티브 표준 blueprint에서 생성한 실행 workspace다.
+
+Foundation stack은 VPC, Object Storage, 선택형 GitLab/Gitea/Jenkins 연동 서버, NKS를 만든다.
+Platform stack은 NKS 내부 namespace, StorageClass, Argo CD, cert-manager, CI runner/agent 같은 add-on을 만든다.
+네트워크는 VPC 1개에 public/private/management routing table과 ingress/nks/devops/management subnet을 분리하는 구조다.
+Security Group은 기본 outbound 전체 허용 rule을 삭제하고 entrypoint/admin/devops egress만 명시한다.
 
 ## Foundation 실행
 
@@ -77,6 +84,7 @@ terraform -chdir=foundation fmt -recursive
 terraform -chdir=foundation validate
 terraform -chdir=foundation plan -out=tfplan
 terraform -chdir=foundation show -json tfplan > foundation-plan.json
+./harness/scripts/policy-check.sh --plan-json ./foundation-plan.json
 \`\`\`
 
 ## Platform 실행
@@ -97,4 +105,3 @@ terraform -chdir=platform show -json tfplan > platform-plan.json
 EOF
 
 echo "Created cloud native workspace: $TARGET_DIR"
-

@@ -10,18 +10,55 @@ environment    = "cloud-native-dev"
 # Extra Helm release example for GitLab Runner.
 # Do not put runner tokens directly in this file. Use a pre-created Kubernetes Secret,
 # External Secrets, or CI secret injection.
+# Review and pin chart versions before uncommenting examples.
 extra_helm_releases = {
   # gitlab_runner = {
   #   name       = "gitlab-runner"
   #   namespace  = "cicd"
   #   repository = "https://charts.gitlab.io"
   #   chart      = "gitlab-runner"
-  #   version    = "0.71.0"
+  #   version    = "replace-with-reviewed-chart-version"
   #   values = [
   #     yamlencode({
   #       gitlabUrl = "https://gitlab.com"
   #       runners = {
   #         executor = "kubernetes"
+  #       }
+  #     })
+  #   ]
+  # }
+  #
+  # jenkins_poc = {
+  #   name       = "jenkins"
+  #   namespace  = "cicd"
+  #   repository = "https://charts.jenkins.io"
+  #   chart      = "jenkins"
+  #   version    = "replace-with-reviewed-chart-version"
+  #   values = [
+  #     yamlencode({
+  #       controller = {
+  #         serviceType = "ClusterIP"
+  #       }
+  #       persistence = {
+  #         enabled = true
+  #         storageClass = "nhn-cinder-hdd-retain"
+  #       }
+  #     })
+  #   ]
+  # }
+  #
+  # gitea_poc = {
+  #   name       = "gitea"
+  #   namespace  = "cicd"
+  #   repository = "https://dl.gitea.com/charts/"
+  #   chart      = "gitea"
+  #   version    = "replace-with-reviewed-chart-version"
+  #   values = [
+  #     yamlencode({
+  #       service = {
+  #         http = {
+  #           type = "ClusterIP"
+  #         }
   #       }
   #     })
   #   ]

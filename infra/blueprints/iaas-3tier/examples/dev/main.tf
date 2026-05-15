@@ -8,23 +8,22 @@ locals {
     standard    = "iaas-3tier"
   }
 
-  egress_all = [
-    {
-      direction        = "egress"
-      ethertype        = "IPv4"
-      protocol         = null
-      port_range_min   = null
-      port_range_max   = null
-      remote_ip_prefix = "0.0.0.0/0"
-      description      = "allow outbound"
-    }
-  ]
-
   security_groups = {
     public_lb = {
-      name = "${local.name_prefix}-public-lb-sg"
+      name        = "${local.name_prefix}-public-lb-sg"
+      description = "Public entry load balancer security group. Internet ingress is limited to service ports."
       rules = concat(
-        local.egress_all,
+        [
+          {
+            direction        = "egress"
+            ethertype        = "IPv4"
+            protocol         = "tcp"
+            port_range_min   = var.web_port
+            port_range_max   = var.web_port
+            remote_ip_prefix = var.subnets.web.cidr
+            description      = "public lb to web subnet"
+          }
+        ],
         [
           for cidr in var.public_ingress_cidrs : {
             direction        = "ingress"
@@ -46,14 +45,63 @@ locals {
             remote_ip_prefix = cidr
             description      = "public https"
           }
-        ]
+        ],
+        try(var.extra_security_group_rules["public_lb"], [])
+      )
+    }
+
+    internal_lb = {
+      name        = "${local.name_prefix}-internal-lb-sg"
+      description = "Internal load balancer security group between web and WAS tiers."
+      rules = concat(
+        [
+          {
+            direction        = "egress"
+            ethertype        = "IPv4"
+            protocol         = "tcp"
+            port_range_min   = var.was_port
+            port_range_max   = var.was_port
+            remote_ip_prefix = var.subnets.app.cidr
+            description      = "internal lb to was subnet"
+          },
+          {
+            direction        = "ingress"
+            ethertype        = "IPv4"
+            protocol         = "tcp"
+            port_range_min   = var.was_port
+            port_range_max   = var.was_port
+            remote_ip_prefix = var.subnets.web.cidr
+            description      = "internal lb from web subnet"
+          }
+        ],
+        try(var.extra_security_group_rules["internal_lb"], [])
       )
     }
 
     web = {
-      name = "${local.name_prefix}-web-sg"
+      name        = "${local.name_prefix}-web-sg"
+      description = "Private web tier security group. Accepts traffic only from DMZ entrypoints and management CIDRs."
       rules = concat(
-        local.egress_all,
+        [
+          {
+            direction        = "egress"
+            ethertype        = "IPv4"
+            protocol         = "tcp"
+            port_range_min   = var.was_port
+            port_range_max   = var.was_port
+            remote_ip_prefix = var.subnets.app.cidr
+            description      = "web to was subnet"
+          },
+          {
+            direction        = "egress"
+            ethertype        = "IPv4"
+            protocol         = "udp"
+            port_range_min   = var.log_ingress_port
+            port_range_max   = var.log_ingress_port
+            remote_ip_prefix = var.subnets.operations.cidr
+            description      = "web logs to operations subnet"
+          }
+        ],
         [
           {
             direction        = "ingress"
@@ -75,23 +123,33 @@ locals {
             remote_ip_prefix = cidr
             description      = "ssh from management cidr"
           }
-        ]
+        ],
+        try(var.extra_security_group_rules["web"], [])
       )
     }
 
     was = {
-      name = "${local.name_prefix}-was-sg"
+      name        = "${local.name_prefix}-was-sg"
+      description = "Private WAS tier security group. Accepts service traffic from internal LB and management CIDRs."
       rules = concat(
-        local.egress_all,
         [
           {
-            direction        = "ingress"
+            direction        = "egress"
             ethertype        = "IPv4"
             protocol         = "tcp"
-            port_range_min   = var.was_port
-            port_range_max   = var.was_port
-            remote_ip_prefix = var.subnets.dmz.cidr
-            description      = "was from web or internal load balancer"
+            port_range_min   = var.db_port
+            port_range_max   = var.db_port
+            remote_ip_prefix = var.subnets.data.cidr
+            description      = "was to db subnet"
+          },
+          {
+            direction        = "egress"
+            ethertype        = "IPv4"
+            protocol         = "udp"
+            port_range_min   = var.log_ingress_port
+            port_range_max   = var.log_ingress_port
+            remote_ip_prefix = var.subnets.operations.cidr
+            description      = "was logs to operations subnet"
           }
         ],
         [
@@ -115,14 +173,26 @@ locals {
             remote_ip_prefix = cidr
             description      = "ssh from management cidr"
           }
-        ]
+        ],
+        try(var.extra_security_group_rules["was"], [])
       )
     }
 
     db = {
-      name = "${local.name_prefix}-db-sg"
+      name        = "${local.name_prefix}-db-sg"
+      description = "Private data tier security group. Accepts DB traffic only from application subnet and management CIDRs."
       rules = concat(
-        local.egress_all,
+        [
+          {
+            direction        = "egress"
+            ethertype        = "IPv4"
+            protocol         = "udp"
+            port_range_min   = var.log_ingress_port
+            port_range_max   = var.log_ingress_port
+            remote_ip_prefix = var.subnets.operations.cidr
+            description      = "db logs to operations subnet"
+          }
+        ],
         [
           {
             direction        = "ingress"
@@ -144,14 +214,28 @@ locals {
             remote_ip_prefix = cidr
             description      = "ssh from management cidr"
           }
-        ]
+        ],
+        try(var.extra_security_group_rules["db"], [])
       )
     }
 
     management = {
-      name = "${local.name_prefix}-management-sg"
+      name        = "${local.name_prefix}-management-sg"
+      description = "Management subnet security group. Admin ingress is restricted to approved CIDRs."
       rules = concat(
-        local.egress_all,
+        flatten([
+          for port in var.management_egress_ports : [
+            {
+              direction        = "egress"
+              ethertype        = "IPv4"
+              protocol         = "tcp"
+              port_range_min   = port
+              port_range_max   = port
+              remote_ip_prefix = var.vpc_cidr
+              description      = "management to vpc port ${port}"
+            }
+          ]
+        ]),
         [
           for cidr in var.management_cidrs : {
             direction        = "ingress"
@@ -162,14 +246,28 @@ locals {
             remote_ip_prefix = cidr
             description      = "ssh from management cidr"
           }
-        ]
+        ],
+        try(var.extra_security_group_rules["management"], [])
       )
     }
 
     operations = {
-      name = "${local.name_prefix}-operations-sg"
+      name        = "${local.name_prefix}-operations-sg"
+      description = "Operations subnet security group for monitoring, log, backup, and security tooling."
       rules = concat(
-        local.egress_all,
+        flatten([
+          for port in var.operations_polling_ports : [
+            {
+              direction        = "egress"
+              ethertype        = "IPv4"
+              protocol         = "tcp"
+              port_range_min   = port
+              port_range_max   = port
+              remote_ip_prefix = var.vpc_cidr
+              description      = "operations polling to vpc port ${port}"
+            }
+          ]
+        ]),
         [
           {
             direction        = "ingress"
@@ -191,7 +289,8 @@ locals {
             remote_ip_prefix = cidr
             description      = "ssh from management cidr"
           }
-        ]
+        ],
+        try(var.extra_security_group_rules["operations"], [])
       )
     }
   }
@@ -200,7 +299,7 @@ locals {
     for index in range(var.web_count) : format("web-%02d", index + 1) => {
       name                = "${local.name_prefix}-web-${format("%02d", index + 1)}"
       flavor_id           = var.flavor_ids.web
-      subnet_key          = "dmz"
+      subnet_key          = "web"
       security_group_keys = ["web"]
       boot_volume_size    = var.boot_volume_size
     }
@@ -288,7 +387,7 @@ locals {
       name               = "${local.name_prefix}-internal-lb"
       description        = "Internal load balancer for WAS tier."
       vip_subnet_id      = module.network.subnet_ids["app"]
-      security_group_ids = [module.security.security_group_ids["was"]]
+      security_group_ids = [module.security.security_group_ids["internal_lb"]]
     }
   }
 
@@ -372,10 +471,17 @@ locals {
 module "network" {
   source = "../../../../modules/network"
 
-  name_prefix         = local.name_prefix
-  vpc_cidr            = var.vpc_cidr
-  subnets             = var.subnets
-  internet_gateway_id = var.internet_gateway_id
+  name_prefix = local.name_prefix
+  vpc_cidr    = var.vpc_cidr
+  routing_tables = {
+    public = {
+      internet_gateway_id = var.public_internet_gateway_id
+    }
+    private    = {}
+    management = {}
+  }
+  default_routing_table_key = "private"
+  subnets                   = var.subnets
 }
 
 module "security" {

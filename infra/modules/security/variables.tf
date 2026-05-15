@@ -1,7 +1,10 @@
 variable "security_groups" {
   description = "Security groups and rules."
   type = map(object({
-    name = string
+    name                 = string
+    description          = optional(string)
+    delete_default_rules = optional(bool, true)
+    tags                 = optional(list(string), [])
     rules = list(object({
       direction        = string
       ethertype        = optional(string, "IPv4")
@@ -14,4 +17,3 @@ variable "security_groups" {
     }))
   }))
 }
-

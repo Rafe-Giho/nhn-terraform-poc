@@ -27,7 +27,12 @@
 
 # 4. plan JSON 생성
 ./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/iaas-3tier/examples/dev
+./harness/scripts/policy-check.sh --plan-json ./harness/out/tfplan.json
+
 ./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/foundation/examples/dev
+./harness/scripts/policy-check.sh --plan-json ./harness/out/tfplan.json
+
+# Kubernetes platform stack은 NHN Cloud SG/routing 리소스가 없으므로 static check 중심으로 검증
 ./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
@@ -36,3 +41,4 @@
 - `apply`, `destroy`, NKS/NAS/DB 같은 비용성 리소스 생성은 사용자 승인을 받은 뒤 실행한다.
 - `harness/out/` 결과물은 재생성 가능한 파일이므로 커밋하지 않는다.
 - provider 문서와 코드가 다르면 코드 기준 목록을 우선 기록하되, 운영 권장 범위는 NHN Cloud 문서화 여부를 함께 본다.
+- `policy-check.sh`는 공개 SSH/RDP, 공개 전체 egress, public 이외 routing table의 gateway attachment, 고위험 delete/replace를 차단한다.

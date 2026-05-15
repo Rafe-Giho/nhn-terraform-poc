@@ -48,20 +48,35 @@ variable "vpc_cidr" {
 variable "subnets" {
   description = "VPC subnet map."
   type = map(object({
-    cidr = string
+    cidr              = string
+    routing_table_key = optional(string)
   }))
   default = {
-    app-a = {
-      cidr = "10.10.10.0/24"
+    ingress = {
+      cidr              = "10.10.10.0/24"
+      routing_table_key = "public"
     }
-    app-b = {
-      cidr = "10.10.20.0/24"
+    nks-a = {
+      cidr              = "10.10.20.0/24"
+      routing_table_key = "private"
+    }
+    nks-b = {
+      cidr              = "10.10.30.0/24"
+      routing_table_key = "private"
+    }
+    devops = {
+      cidr              = "10.10.40.0/24"
+      routing_table_key = "management"
+    }
+    management = {
+      cidr              = "10.10.50.0/24"
+      routing_table_key = "management"
     }
   }
 }
 
-variable "internet_gateway_id" {
-  description = "Existing Internet Gateway ID to attach to the routing table. Create/check this in the NHN Cloud console."
+variable "public_internet_gateway_id" {
+  description = "Existing Internet Gateway ID to attach only to the public routing table. Create/check this in the NHN Cloud console."
   type        = string
   default     = null
 }
@@ -76,6 +91,66 @@ variable "management_cidrs" {
   description = "CIDRs allowed for SSH/admin access. Leave empty to disable admin ingress."
   type        = list(string)
   default     = []
+}
+
+variable "devops_access_cidrs" {
+  description = "CIDRs allowed to reach Git/Gitea/GitLab/Jenkins service ports on DevOps integration servers."
+  type        = list(string)
+  default     = []
+}
+
+variable "entrypoint_backend_ports" {
+  description = "TCP backend ports that public entrypoint load balancers can reach inside the VPC."
+  type        = list(number)
+  default     = [80, 443]
+}
+
+variable "platform_admin_egress_ports" {
+  description = "TCP ports that platform administration hosts can reach inside the VPC."
+  type        = list(number)
+  default     = [22, 443, 6443]
+}
+
+variable "devops_internal_egress_ports" {
+  description = "TCP ports that DevOps integration servers can reach inside the VPC."
+  type        = list(number)
+  default     = [22, 80, 443, 6443, 50000]
+}
+
+variable "extra_security_group_rules" {
+  description = "Project-specific additional security group rules by standard group key. Use only after design review."
+  type = map(list(object({
+    direction        = string
+    ethertype        = optional(string, "IPv4")
+    protocol         = optional(string)
+    port_range_min   = optional(number)
+    port_range_max   = optional(number)
+    remote_ip_prefix = optional(string)
+    remote_group_id  = optional(string)
+    description      = optional(string)
+  })))
+  default = {}
+}
+
+variable "devops_servers" {
+  description = "Optional VM-based DevOps integration servers such as GitLab, Gitea, and Jenkins. Application installation is handled outside Terraform."
+  type = map(object({
+    enabled                    = optional(bool, true)
+    name                       = optional(string)
+    role                       = optional(string)
+    subnet_key                 = optional(string, "devops")
+    flavor_id                  = string
+    image_id                   = string
+    key_pair                   = optional(string)
+    availability_zone          = optional(string)
+    fixed_ip_v4                = optional(string)
+    ingress_ports              = optional(list(number), [])
+    boot_volume_size           = optional(number, 80)
+    boot_delete_on_termination = optional(bool, false)
+    data_volume_size           = optional(number, 0)
+    data_volume_type           = optional(string, "General HDD")
+  }))
+  default = {}
 }
 
 variable "object_storage_containers" {
@@ -108,7 +183,7 @@ variable "object_storage_containers" {
 variable "nks_subnet_key" {
   description = "Subnet key to use for the NKS fixed subnet."
   type        = string
-  default     = "app-a"
+  default     = "nks-a"
 }
 
 variable "nks_cluster_name" {

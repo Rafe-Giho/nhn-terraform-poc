@@ -38,7 +38,7 @@ if [[ -e "$TARGET_DIR" ]]; then
   exit 1
 fi
 
-mkdir -p "$TARGET_DIR/terraform" "$TARGET_DIR/modules"
+mkdir -p "$TARGET_DIR/terraform" "$TARGET_DIR/modules" "$TARGET_DIR/harness/scripts"
 
 cp "$BLUEPRINT_DIR"/backend.s3.example.hcl "$TARGET_DIR/terraform/"
 cp "$BLUEPRINT_DIR"/main.tf "$TARGET_DIR/terraform/"
@@ -52,12 +52,17 @@ for module in network security compute block-storage load-balancer object-storag
   cp -R "$MODULES_DIR/$module" "$TARGET_DIR/modules/"
 done
 
+cp "$REPO_ROOT"/harness/scripts/*.sh "$TARGET_DIR/harness/scripts/"
+
 sed -i 's#../../../../modules/#../modules/#g' "$TARGET_DIR/terraform/main.tf"
 
 cat > "$TARGET_DIR/README.md" <<EOF
 # $PROJECT_NAME IaaS 3-tier $ENV_NAME
 
 이 디렉터리는 NHN Cloud IaaS 3-tier 표준 blueprint에서 생성한 실행 workspace다.
+
+네트워크는 VPC 1개에 public/private/management routing table과 dmz/web/app/data/management/operations subnet을 분리하는 구조다.
+Security Group은 기본 outbound 전체 허용 rule을 삭제하고 계층별 egress만 명시한다.
 
 ## 실행 순서
 
@@ -68,6 +73,7 @@ terraform -chdir=terraform fmt -recursive
 terraform -chdir=terraform validate
 terraform -chdir=terraform plan -out=tfplan
 terraform -chdir=terraform show -json tfplan > plan.json
+./harness/scripts/policy-check.sh --plan-json ./plan.json
 \`\`\`
 
 \`terraform.tfvars\`, \`tfplan\`, \`plan.json\`, state 파일은 커밋하지 않는다.
@@ -75,4 +81,3 @@ terraform -chdir=terraform show -json tfplan > plan.json
 EOF
 
 echo "Created IaaS 3-tier workspace: $TARGET_DIR"
-

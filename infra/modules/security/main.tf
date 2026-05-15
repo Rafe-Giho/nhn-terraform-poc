@@ -12,7 +12,10 @@ locals {
 resource "nhncloud_networking_secgroup_v2" "this" {
   for_each = var.security_groups
 
-  name = each.value.name
+  name                 = each.value.name
+  description          = try(each.value.description, null)
+  delete_default_rules = try(each.value.delete_default_rules, true)
+  tags                 = try(each.value.tags, [])
 }
 
 resource "nhncloud_networking_secgroup_rule_v2" "this" {
@@ -28,4 +31,3 @@ resource "nhncloud_networking_secgroup_rule_v2" "this" {
   remote_group_id   = try(each.value.remote_group_id, null)
   description       = try(each.value.description, null)
 }
-

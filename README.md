@@ -14,6 +14,8 @@ docs/
   standards/
     terraform-scope.md                      # 구축 가능 범위와 운영 판단
     architecture/
+      network.md                            # NHN Cloud VPC/routing 표준 설계
+      security.md                           # SG/NACL/Flow Log/outbound 보안 표준
       iaas-3tier.md                         # IaaS 3-tier 표준 설계
       cloud-native.md                       # 클라우드 네이티브 표준 설계
   guides/
@@ -54,7 +56,9 @@ examples/
 2. [IaaS 3-tier 구축 가이드](./docs/guides/iaas-3tier-build-guide.md)
 3. [클라우드 네이티브 구축 가이드](./docs/guides/cloud-native-build-guide.md)
 4. [구축 범위와 표준 아키텍처](./docs/standards/terraform-scope.md)
-5. [Provider Inventory](./docs/reference/provider-inventory.md)
+5. [NHN Cloud 네트워크 표준 설계](./docs/standards/architecture/network.md)
+6. [NHN Cloud 보안 표준 설계](./docs/standards/architecture/security.md)
+7. [Provider Inventory](./docs/reference/provider-inventory.md)
 
 ## 표준 아키텍처
 
@@ -64,8 +68,8 @@ examples/
 
 | 표준안 | 주요 구조 | Terraform 역할 |
 |---|---|---|
-| IaaS 3-tier 전환 | Web/WAS/DB VM, 운영 솔루션 서버, LB, volume | VPC, subnet, security group, compute, LB, volume, Object Storage 표준화 |
-| 클라우드 네이티브 전환 | NKS, GitOps, CI/CD, Object Storage | VPC, NKS, Object Storage, namespace, StorageClass, Helm add-on 표준화 |
+| IaaS 3-tier 전환 | Web/WAS/DB VM, 운영 솔루션 서버, LB, volume | VPC, routing table, subnet, security group, compute, LB, volume, Object Storage 표준화 |
+| 클라우드 네이티브 전환 | NKS, GitOps, CI/CD, GitLab/Gitea/Jenkins 연동, Object Storage | VPC, routing table, subnet, NKS, DevOps VM, Object Storage, namespace, StorageClass, Helm add-on 표준화 |
 
 현재 구현된 Terraform 코드는 `infra/blueprints` 아래에 전환 유형별로 분리되어 있다. `infra/modules`는 blueprint가 사용하는 공통 모듈이며 직접 실행 대상이 아니다.
 
@@ -89,8 +93,10 @@ Terraform 실행 전에 아래 값이 필요합니다.
 | VM/NKS flavor UUID | 서버 또는 worker node 사양 |
 | VM/NKS image UUID | 서버 또는 worker base image |
 | Kubernetes/addon version | NKS 생성 label |
+| GitLab/Gitea/Jenkins image/flavor | VM 기반 DevOps 연동 서버 |
 | External network/subnet ID | Floating IP, LB, NKS public endpoint |
-| Internet Gateway ID | routing table attach |
+| Internet Gateway ID | public routing table attach |
+| Network ACL, Flow Log, NAT/Service Gateway | 콘솔 선행 구성 또는 별도 검증 |
 | Quota | NKS, LB, volume 생성 가능성 확인 |
 
 자세한 목록은 [구축 가이드](./docs/guides/build-guide.md)의 공통 사전 준비와 전환 유형별 가이드를 참고하세요.
@@ -155,7 +161,11 @@ Plan JSON 생성:
 
 ```bash
 ./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/iaas-3tier/examples/dev
+./harness/scripts/policy-check.sh --plan-json ./harness/out/tfplan.json
+
 ./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/foundation/examples/dev
+./harness/scripts/policy-check.sh --plan-json ./harness/out/tfplan.json
+
 ./harness/scripts/plan-json.sh --terraform-root ./infra/blueprints/cloud-native/platform/examples/dev
 ```
 
@@ -163,6 +173,8 @@ Plan JSON 생성:
 
 - `terraform.tfvars`, state, plan 파일은 커밋하지 않습니다.
 - 운영 `apply` 전에는 반드시 plan을 검토합니다.
+- Security Group은 기본 outbound 전체 허용 rule을 삭제하고 필요한 egress만 명시합니다.
+- Network ACL, Flow Log, NAT Gateway, Service Gateway는 Terraform plan에 나타나지 않을 수 있으므로 콘솔 검증을 별도로 기록합니다.
 - NKS cluster label, addon, node image, subnet, keypair 변경은 재생성 위험이 있습니다.
 - Kubernetes Secret, CI token, registry password 같은 민감값은 Terraform state에 남기지 않습니다.
 - provider code에는 있지만 문서화가 약한 리소스는 dev smoke 검증 후 운영 편입합니다.

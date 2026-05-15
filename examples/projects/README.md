@@ -17,11 +17,16 @@ projects/
     iaas-3tier/dev/
       terraform/
       modules/
+      harness/scripts/
     cloud-native/dev/
       foundation/
       platform/
       modules/
+        compute/
+        block-storage/
+      harness/scripts/
 ```
 
-`projects/`는 실제 계정값, state, plan 산출물이 생기는 작업 디렉터리라 기본적으로 커밋하지 않는다. 장기 운영 프로젝트는 생성된 workspace를 별도 사업 repository로 옮겨 관리한다.
+생성된 예시는 Public VPC/Private VPC를 별도로 만들지 않는다. 하나의 VPC 안에서 public/private/management routing table과 역할별 subnet을 분리한다. Security Group은 기본 outbound 전체 허용 rule을 삭제하고 표준 egress만 생성한다.
 
+`projects/`는 실제 계정값, state, plan 산출물이 생기는 작업 디렉터리라 기본적으로 커밋하지 않는다. 장기 운영 프로젝트는 생성된 workspace를 별도 사업 repository로 옮겨 관리한다.
