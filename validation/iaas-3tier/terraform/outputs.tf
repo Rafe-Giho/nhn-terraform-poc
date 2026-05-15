@@ -8,6 +8,16 @@ output "subnet_ids" {
   value       = module.network.subnet_ids
 }
 
+output "routing_table_ids" {
+  description = "Created routing table IDs by key."
+  value       = module.network.routing_table_ids
+}
+
+output "subnet_routing_table_keys" {
+  description = "Subnet to routing table mapping."
+  value       = module.network.subnet_routing_table_keys
+}
+
 output "security_group_ids" {
   description = "Security group IDs by key."
   value       = module.security.security_group_ids
